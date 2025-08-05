@@ -60,18 +60,14 @@ class TextProcessor:
             return [embedding.embedding for embedding in response.data]
         except Exception as e:
             logger.error(f"Failed to generate embeddings: {e}")
-            return []
+            raise
     
     def process_messages_batch(self, messages: List) -> List[Dict[str, Any]]:
         """Process a batch of messages."""
         all_documents = []
         
         for message in messages:
-            try:
-                documents = self.process_message(message)
-                all_documents.extend(documents)
-            except Exception as e:
-                logger.error(f"Failed to process message {message.id}: {e}")
-                continue
+            documents = self.process_message(message)
+            all_documents.extend(documents)
         
         return all_documents 

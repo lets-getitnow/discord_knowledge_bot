@@ -30,9 +30,9 @@ class ManagementCommands(commands.Cog):
             if self.bot.is_indexing:
                 progress = self.bot.indexing_progress
                 status_msg += f"🔄 **Indexing Status**: In Progress\n"
-                status_msg += f"📊 **Progress**: {progress.get('status', 'Processing...')}\n"
-                if progress.get('total', 0) > 0:
-                    percentage = (progress.get('processed', 0) / progress.get('total', 1)) * 100
+                status_msg += f"📊 **Progress**: {progress['status']}\n"
+                if progress['total'] > 0:
+                    percentage = (progress['processed'] / progress['total']) * 100
                     status_msg += f"📈 **Completion**: {percentage:.1f}%\n"
             else:
                 status_msg += "✅ **Indexing Status**: Idle\n"
@@ -79,10 +79,10 @@ class ManagementCommands(commands.Cog):
             if self.bot.is_indexing:
                 progress = self.bot.indexing_progress
                 stats_msg += f"\n🔄 **Current Indexing**:\n"
-                stats_msg += f"📊 **Status**: {progress.get('status', 'Processing...')}\n"
-                if progress.get('total', 0) > 0:
-                    percentage = (progress.get('processed', 0) / progress.get('total', 1)) * 100
-                    stats_msg += f"📈 **Progress**: {percentage:.1f}% ({progress.get('processed', 0)}/{progress.get('total', 0)})\n"
+                stats_msg += f"📊 **Status**: {progress['status']}\n"
+                if progress['total'] > 0:
+                    percentage = (progress['processed'] / progress['total']) * 100
+                    stats_msg += f"📈 **Progress**: {percentage:.1f}% ({progress['processed']}/{progress['total']})\n"
             
             await ctx.send(stats_msg)
             

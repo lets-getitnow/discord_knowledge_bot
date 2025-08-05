@@ -61,6 +61,6 @@ def format_message_metadata(message) -> Dict[str, Any]:
         'channel_id': str(message.channel.id),
         'channel_name': message.channel.name,
         'timestamp': message.created_at.isoformat(),
-        'guild_id': str(message.guild.id) if message.guild else None,
-        'guild_name': message.guild.name if message.guild else None
+        'guild_id': str(message.guild.id) if message.guild else '',
+        'guild_name': message.guild.name if message.guild else ''
     } 

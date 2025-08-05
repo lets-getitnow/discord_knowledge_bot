@@ -28,7 +28,11 @@ class MessageCollector:
         try:
             while True:
                 # Calculate how many messages to fetch
-                fetch_limit = min(self.max_messages_per_request, limit - len(messages) if limit else self.max_messages_per_request)
+                if limit:
+                    remaining = limit - len(messages)
+                    fetch_limit = min(self.max_messages_per_request, remaining)
+                else:
+                    fetch_limit = self.max_messages_per_request
                 
                 if limit and len(messages) >= limit:
                     break
@@ -58,6 +62,7 @@ class MessageCollector:
                 
         except Exception as e:
             logger.error(f"Error collecting messages from {channel.name}: {e}")
+            raise
         
         return messages
     
@@ -71,16 +76,11 @@ class MessageCollector:
         logger.info(f"Found {len(text_channels)} text channels in {guild.name}")
         
         for channel in text_channels:
-            try:
-                logger.info(f"Collecting messages from {channel.name}")
-                channel_messages = await self.collect_channel_messages(channel, limit_per_channel)
-                all_messages.extend(channel_messages)
-                
-                logger.info(f"Collected {len(channel_messages)} messages from {channel.name}")
-                
-            except Exception as e:
-                logger.error(f"Error collecting from {channel.name}: {e}")
-                continue
+            logger.info(f"Collecting messages from {channel.name}")
+            channel_messages = await self.collect_channel_messages(channel, limit_per_channel)
+            all_messages.extend(channel_messages)
+            
+            logger.info(f"Collected {len(channel_messages)} messages from {channel.name}")
         
         logger.info(f"Total messages collected from {guild.name}: {len(all_messages)}")
         return all_messages
@@ -90,38 +90,38 @@ class MessageCollector:
         last_message_id = None
         total_collected = 0
         
-        try:
-            while True:
-                if limit and total_collected >= limit:
-                    break
-                
-                # Calculate batch size
-                batch_size = min(self.max_messages_per_request, limit - total_collected if limit else self.max_messages_per_request)
-                
-                # Fetch messages
-                if last_message_id:
-                    channel_messages = await channel.history(
-                        limit=batch_size,
-                        before=last_message_id
-                    ).flatten()
-                else:
-                    channel_messages = await channel.history(
-                        limit=batch_size
-                    ).flatten()
-                
-                if not channel_messages:
-                    break
-                
-                total_collected += len(channel_messages)
-                last_message_id = channel_messages[-1].id
-                
-                yield channel_messages
-                
-                # Rate limiting
-                await rate_limit_delay(self.rate_limit_delay)
-                
-        except Exception as e:
-            logger.error(f"Error in message generator for {channel.name}: {e}")
+        while True:
+            if limit and total_collected >= limit:
+                break
+            
+            # Calculate batch size
+            if limit:
+                remaining = limit - total_collected
+                batch_size = min(self.max_messages_per_request, remaining)
+            else:
+                batch_size = self.max_messages_per_request
+            
+            # Fetch messages
+            if last_message_id:
+                channel_messages = await channel.history(
+                    limit=batch_size,
+                    before=last_message_id
+                ).flatten()
+            else:
+                channel_messages = await channel.history(
+                    limit=batch_size
+                ).flatten()
+            
+            if not channel_messages:
+                break
+            
+            total_collected += len(channel_messages)
+            last_message_id = channel_messages[-1].id
+            
+            yield channel_messages
+            
+            # Rate limiting
+            await rate_limit_delay(self.rate_limit_delay)
     
     def filter_text_messages(self, messages: List[discord.Message]) -> List[discord.Message]:
         """Filter messages to only include those with text content."""

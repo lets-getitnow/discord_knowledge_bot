@@ -102,7 +102,7 @@ class DiscordKnowledgeBot(commands.Bot):
             
         except Exception as e:
             logger.error(f"Error handling chat: {e}")
-            await message.channel.send("I'm sorry, I encountered an error while processing your message.")
+            raise
     
     async def start_indexing(self, guild_id: int, channel_id: Optional[int] = None):
         """Start indexing process."""

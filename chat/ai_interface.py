@@ -28,10 +28,10 @@ class AIInterface:
         # Build context from relevant documents
         context_parts = []
         for i, doc in enumerate(relevant_docs[:3]):  # Limit to top 3 results
-            metadata = doc.get('metadata', {})
-            author = metadata.get('author_name', 'Unknown')
-            channel = metadata.get('channel_name', 'Unknown')
-            timestamp = metadata.get('timestamp', 'Unknown')
+            metadata = doc['metadata']
+            author = metadata['author_name']
+            channel = metadata['channel_name']
+            timestamp = metadata['timestamp']
             
             context_parts.append(f"Message {i+1} (from {author} in #{channel} at {timestamp}):\n{doc['document']}")
         
@@ -71,7 +71,7 @@ Please provide a helpful and accurate response based on the context above."""
             
         except Exception as e:
             logger.error(f"Failed to get AI response: {e}")
-            return "I'm sorry, I encountered an error while processing your request. Please try again."
+            raise
     
     def format_search_results(self, results: List[Dict[str, Any]]) -> str:
         """Format search results for display."""
@@ -80,13 +80,17 @@ Please provide a helpful and accurate response based on the context above."""
         
         formatted_results = []
         for i, result in enumerate(results[:3]):  # Limit to top 3
-            metadata = result.get('metadata', {})
-            author = metadata.get('author_name', 'Unknown')
-            channel = metadata.get('channel_name', 'Unknown')
-            timestamp = metadata.get('timestamp', 'Unknown')
+            metadata = result['metadata']
+            author = metadata['author_name']
+            channel = metadata['channel_name']
+            timestamp = metadata['timestamp']
             
             # Truncate document content for display
-            content = result.get('document', '')[:200] + "..." if len(result.get('document', '')) > 200 else result.get('document', '')
+            document = result['document']
+            if len(document) > 200:
+                content = document[:200] + "..."
+            else:
+                content = document
             
             formatted_results.append(f"**{i+1}. From {author} in #{channel} ({timestamp})**\n{content}")
         

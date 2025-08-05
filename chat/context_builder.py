@@ -18,13 +18,9 @@ class ContextBuilder:
     
     def search_relevant_content(self, query: str, n_results: int = 5) -> List[Dict[str, Any]]:
         """Search for relevant content based on user query."""
-        try:
-            results = self.storage.search(query, n_results)
-            logger.info(f"Found {len(results)} relevant documents for query: {query}")
-            return results
-        except Exception as e:
-            logger.error(f"Failed to search for relevant content: {e}")
-            return []
+        results = self.storage.search(query, n_results)
+        logger.info(f"Found {len(results)} relevant documents for query: {query}")
+        return results
     
     def build_conversation_context(self, query: str, include_search_results: bool = True) -> Dict[str, Any]:
         """Build context for AI conversation."""
@@ -35,19 +31,16 @@ class ContextBuilder:
         }
         
         if include_search_results:
-            try:
-                relevant_docs = self.search_relevant_content(query)
-                context['relevant_docs'] = relevant_docs
-                context['search_performed'] = True
-                logger.info(f"Built context with {len(relevant_docs)} relevant documents")
-            except Exception as e:
-                logger.error(f"Failed to build conversation context: {e}")
+            relevant_docs = self.search_relevant_content(query)
+            context['relevant_docs'] = relevant_docs
+            context['search_performed'] = True
+            logger.info(f"Built context with {len(relevant_docs)} relevant documents")
         
         return context
     
     def get_context_summary(self, context: Dict[str, Any]) -> str:
         """Get a summary of the conversation context."""
-        if not context.get('relevant_docs'):
+        if 'relevant_docs' not in context or not context['relevant_docs']:
             return "No relevant server content found for this query."
         
         doc_count = len(context['relevant_docs'])
