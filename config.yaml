@@ -10,8 +10,8 @@ bot:
 
 # OpenAI Configuration
 openai:
-  model: "gpt-3.5-turbo"
-  embedding_model: "text-embedding-ada-002"
+  model: "gpt-4o-mini"
+  embedding_model: "text-embedding-3-small"
   max_tokens: 1000
   temperature: 0.7
 
