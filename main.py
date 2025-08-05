@@ -17,7 +17,7 @@ logging.basicConfig(
 
 def generate_invite_link(app_id):
     """Generate Discord bot invite link."""
-    permissions = "8"  # Administrator permissions
+    permissions = "66560"  # Read Messages, Send Messages, Read Message History
     scopes = "bot%20applications.commands"
     return f"https://discord.com/api/oauth2/authorize?client_id={app_id}&permissions={permissions}&scope={scopes}"
 

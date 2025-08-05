@@ -94,7 +94,7 @@ Simply send a message to chat with the AI! The bot will search through indexed c
 
 ### Permissions
 
-Indexing and management commands require "Manage Messages" permission.
+The bot needs "Read Message History" permission to index channels.
 
 ## Configuration
 
