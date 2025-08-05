@@ -121,32 +121,7 @@ class ManagementCommands(commands.Cog):
             logger.error(f"Error in clear command: {e}")
             await ctx.send(f"❌ An error occurred while clearing data: {str(e)}")
     
-    @commands.command(name="help")
-    async def help_command(self, ctx):
-        """Show help information about the bot commands."""
-        help_msg = """🤖 **Discord Knowledge Bot Help**
 
-**Indexing Commands:**
-• `!index-server` - Index all text channels in the server
-• `!index-channel [channel]` - Index a specific channel (or current channel)
-• `!reindex-server` - Clear and reindex all text channels
-• `!reindex-channel [channel]` - Clear and reindex a specific channel
-
-**Management Commands:**
-• `!status` - Show bot and indexing status
-• `!stats` - Show detailed statistics
-• `!clear` - Clear all indexed data
-• `!help` - Show this help message
-
-**Chat Interface:**
-Simply send a message to chat with the AI! The bot will search through indexed content to provide relevant answers.
-
-**Permissions:**
-Indexing and management commands require "Manage Messages" permission.
-
-**Note:** The bot indexes text content only and respects Discord's rate limits."""
-        
-        await ctx.send(help_msg)
     
     @clear.error
     async def clear_error(self, ctx, error):

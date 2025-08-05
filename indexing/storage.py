@@ -5,8 +5,10 @@ Handles vector database operations and document storage.
 
 import chromadb
 from chromadb.config import Settings
+from chromadb.utils import embedding_functions
 from typing import List, Dict, Any, Optional
 import logging
+from utils.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -29,13 +31,20 @@ class ChromaStorage:
                 settings=Settings(anonymized_telemetry=False)
             )
             
-            # Get or create collection
+            # Create OpenAI embedding function
+            openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+                api_key=config['openai']['api_key'],
+                model_name=config['openai']['embedding_model']
+            )
+            
+            # Get or create collection with OpenAI embeddings
             self.collection = self.client.get_or_create_collection(
                 name=self.collection_name,
+                embedding_function=openai_ef,
                 metadata={"description": "Discord server knowledge base"}
             )
             
-            logger.info(f"ChromaDB initialized with collection: {self.collection_name}")
+            logger.info(f"ChromaDB initialized with OpenAI embeddings and collection: {self.collection_name}")
             
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB: {e}")
@@ -49,13 +58,13 @@ class ChromaStorage:
                 metadatas=metadatas,
                 ids=ids
             )
-            logger.info(f"Added {len(documents)} documents to collection")
+            logger.info(f"Added {len(documents)} documents to collection with OpenAI embeddings")
         except Exception as e:
             logger.error(f"Failed to add documents: {e}")
             raise
     
     def search(self, query: str, n_results: int = 5) -> List[Dict[str, Any]]:
-        """Search for similar documents."""
+        """Search for similar documents using OpenAI embeddings."""
         try:
             results = self.collection.query(
                 query_texts=[query],
@@ -102,8 +111,17 @@ class ChromaStorage:
         """Clear all documents from the collection."""
         try:
             self.client.delete_collection(self.collection_name)
+            
+            # Create OpenAI embedding function
+            openai_ef = embedding_functions.OpenAIEmbeddingFunction(
+                api_key=config['openai']['api_key'],
+                model_name=config['openai']['embedding_model']
+            )
+            
+            # Recreate collection with OpenAI embeddings
             self.collection = self.client.create_collection(
                 name=self.collection_name,
+                embedding_function=openai_ef,
                 metadata={"description": "Discord server knowledge base"}
             )
             logger.info(f"Cleared collection: {self.collection_name}")

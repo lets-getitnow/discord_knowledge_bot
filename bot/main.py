@@ -8,10 +8,10 @@ from discord.ext import commands
 import asyncio
 import logging
 from typing import Optional
+from asyncio import TimeoutError
 
 from utils.config import config
 from indexing.storage import ChromaStorage
-from indexing.processor import TextProcessor
 from indexing.collector import MessageCollector
 from chat.ai_interface import AIInterface
 from chat.context_builder import ContextBuilder
@@ -43,7 +43,6 @@ class DiscordKnowledgeBot(commands.Bot):
             persist_directory=config['chromadb']['persist_directory'],
             collection_name=config['chromadb']['collection_name']
         )
-        self.processor = TextProcessor()
         self.collector = MessageCollector()
         self.ai_interface = AIInterface()
         self.context_builder = ContextBuilder(self.storage)
@@ -51,6 +50,12 @@ class DiscordKnowledgeBot(commands.Bot):
         # Indexing status
         self.is_indexing = False
         self.indexing_progress = {}
+        
+        # Add a simple test command
+        @self.command(name="ping")
+        async def ping(ctx):
+            """Test command to verify bot is working."""
+            await ctx.send("🏓 Pong!")
     
     async def setup_hook(self):
         """Set up bot components."""
@@ -61,12 +66,20 @@ class DiscordKnowledgeBot(commands.Bot):
         await self.load_extension('bot.commands.chat_commands')
         await self.load_extension('bot.commands.management_commands')
         
+        # Log loaded commands
+        logger.info(f"Loaded {len(self.commands)} commands:")
+        for command in self.commands:
+            logger.info(f"  - {command.name}: {command.help or 'No description'}")
+        
         logger.info("Bot setup complete!")
     
     async def on_ready(self):
         """Called when bot is ready."""
         logger.info(f'Logged in as {self.user} (ID: {self.user.id})')
         logger.info(f'Connected to {len(self.guilds)} guild(s)')
+        
+        # Log available commands
+        logger.info(f"Available commands: {[cmd.name for cmd in self.commands]}")
         
         # Set bot status
         await self.change_presence(activity=discord.Game(name="Indexing Knowledge"))
@@ -76,6 +89,10 @@ class DiscordKnowledgeBot(commands.Bot):
         # Ignore bot messages
         if message.author == self.user:
             return
+        
+        # Debug: Log all messages that start with prefix
+        if message.content.startswith(config['bot']['prefix']):
+            logger.info(f"Command received: {message.content}")
         
         # Handle commands
         await self.process_commands(message)
@@ -152,8 +169,27 @@ class DiscordKnowledgeBot(commands.Bot):
         for i in range(0, len(text_messages), batch_size):
             batch = text_messages[i:i + batch_size]
             
-            # Process batch
-            documents = self.processor.process_messages_batch(batch)
+            # Prepare documents for storage
+            documents = []
+            for j, message in enumerate(batch):
+                doc_id = f"{message.guild.id}_{message.channel.id}_{message.id}"
+                metadata = {
+                    'guild_id': message.guild.id,
+                    'guild_name': message.guild.name,
+                    'channel_id': message.channel.id,
+                    'channel_name': message.channel.name,
+                    'message_id': message.id,
+                    'author_id': message.author.id,
+                    'author_name': message.author.display_name,
+                    'timestamp': message.created_at.isoformat(),
+                    'content': message.content
+                }
+                
+                documents.append({
+                    'text': message.content,
+                    'metadata': metadata,
+                    'id': doc_id
+                })
             
             if documents:
                 # Prepare for storage
@@ -183,8 +219,27 @@ class DiscordKnowledgeBot(commands.Bot):
         self.indexing_progress['total'] = len(text_messages)
         self.indexing_progress['status'] = 'Processing messages...'
         
-        # Process messages
-        documents = self.processor.process_messages_batch(text_messages)
+        # Prepare documents for storage
+        documents = []
+        for message in text_messages:
+            doc_id = f"{message.guild.id}_{message.channel.id}_{message.id}"
+            metadata = {
+                'guild_id': message.guild.id,
+                'guild_name': message.guild.name,
+                'channel_id': message.channel.id,
+                'channel_name': message.channel.name,
+                'message_id': message.id,
+                'author_id': message.author.id,
+                'author_name': message.author.display_name,
+                'timestamp': message.created_at.isoformat(),
+                'content': message.content
+            }
+            
+            documents.append({
+                'text': message.content,
+                'metadata': metadata,
+                'id': doc_id
+            })
         
         if documents:
             # Prepare for storage
