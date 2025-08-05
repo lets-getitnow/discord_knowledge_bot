@@ -203,12 +203,43 @@ class DiscordKnowledgeBot(commands.Bot):
 
 def run_bot():
     """Run the Discord bot."""
-    bot = DiscordKnowledgeBot()
+    logger.info("Initializing Discord Knowledge Bot...")
     
     try:
-        bot.run(config['bot']['token'])
+        # Log token information before attempting connection
+        token = config['bot']['token']
+        token_preview = token[:10] + "..." + token[-10:] if len(token) > 20 else "***"
+        logger.info(f"Attempting to connect with token: {token_preview}")
+        logger.info(f"Token length: {len(token)} characters")
+        
+        bot = DiscordKnowledgeBot()
+        logger.info("Bot instance created successfully")
+        
+        logger.info("Attempting to connect to Discord...")
+        bot.run(token)
+        
+    except discord.LoginFailure as e:
+        logger.error("Discord login failed - this usually means the token is invalid")
+        logger.error(f"Login failure details: {e}")
+        logger.error("Please check that your DISCORD_TOKEN is correct and not expired")
+        raise
+    except discord.HTTPException as e:
+        logger.error(f"Discord HTTP error occurred: {e}")
+        logger.error(f"HTTP status: {e.status}")
+        logger.error(f"HTTP response: {e.response}")
+        raise
+    except discord.ConnectionClosed as e:
+        logger.error(f"Discord connection was closed: {e}")
+        logger.error(f"Close code: {e.code}")
+        logger.error(f"Close reason: {e.reason}")
+        raise
+    except ValueError as e:
+        logger.error(f"Configuration error: {e}")
+        raise
     except Exception as e:
-        logger.error(f"Failed to run bot: {e}")
+        logger.error(f"Unexpected error during bot startup: {e}")
+        logger.error(f"Error type: {type(e).__name__}")
+        logger.error(f"Error details: {str(e)}")
         raise
 
 if __name__ == "__main__":

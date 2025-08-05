@@ -57,6 +57,15 @@ These are loaded automatically when the bot starts.
 
 ## Usage
 
+### Testing Your Setup
+
+Before running the bot, test your configuration:
+```bash
+python test_setup.py
+```
+
+This will validate your Discord token, environment variables, and dependencies.
+
 ### Starting the Bot
 
 ```bash
@@ -172,22 +181,57 @@ indexing:
 1. **Missing Environment Variables**
    - Ensure `DISCORD_TOKEN` and `OPENAI_API_KEY` are set
 
-2. **Permission Errors**
+2. **Invalid Discord Token**
+   - Run `python test_setup.py` to validate your token
+   - Check that your token is correct and not expired
+   - Ensure the token is from a Discord bot application (not a user token)
+
+3. **Permission Errors**
    - Bot needs "Manage Messages" permission for indexing commands
 
-3. **Rate Limiting**
+4. **Rate Limiting**
    - Bot includes built-in delays to respect Discord API limits
 
-4. **Storage Issues**
+5. **Storage Issues**
    - Ensure write permissions for the `./data` directory
+
+### Debugging
+
+The bot now provides detailed error logging to help diagnose issues:
+
+#### Test Setup Script
+Run the test setup script to validate your configuration:
+```bash
+python test_setup.py
+```
+
+This will check:
+- Environment variables
+- Discord token format and validity
+- Required dependencies
+- Configuration files
+
+#### Enhanced Error Logging
+The bot now provides detailed error information including:
+- Token validation and format checking
+- Environment variable status
+- Discord API error details
+- Configuration loading issues
+
+#### Common Token Issues
+- **"Improper token has been passed"**: Usually means the token is invalid, expired, or malformed
+- **Token too short/long**: Discord tokens are typically ~59 characters
+- **Missing dots**: Discord tokens usually contain dots (.)
+- **Wrong token type**: Make sure you're using a bot token, not a user token
 
 ### Logs
 
 The bot provides detailed logging. Check console output for:
 - Indexing progress
-- Error messages
+- Error messages with detailed context
 - API rate limiting
 - Storage operations
+- Token validation results
 
 ## Development
 
