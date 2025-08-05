@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 def validate_discord_token(token):
-    """Validate Discord token format and provide detailed error information."""
+    """Check if Discord token exists and is not empty."""
     if not token:
         return False, "Token is None or empty"
     
@@ -26,18 +26,7 @@ def validate_discord_token(token):
     if not token:
         return False, "Token is empty after stripping whitespace"
     
-    # Discord tokens are typically 59 characters long and contain dots
-    if len(token) < 50:
-        return False, f"Token seems too short ({len(token)} chars), Discord tokens are typically ~59 characters"
-    
-    if len(token) > 100:
-        return False, f"Token seems too long ({len(token)} chars), Discord tokens are typically ~59 characters"
-    
-    # Check for basic Discord token format (contains dots)
-    if '.' not in token:
-        return False, "Token doesn't contain dots, which is unusual for Discord tokens"
-    
-    return True, "Token format appears valid"
+    return True, "Token is present"
 
 def load_config():
     """Load configuration from config.yaml and environment variables."""

@@ -98,23 +98,24 @@ def check_dependencies():
     """Check if required Python packages are installed."""
     print("\n📦 Checking dependencies...")
     
-    required_packages = [
-        'discord.py',
-        'openai',
-        'chromadb',
-        'pyyaml',
-        'python-dotenv'
-    ]
+    # Map pip package names to their actual import names
+    package_imports = {
+        'discord.py': 'discord',
+        'openai': 'openai',
+        'chromadb': 'chromadb',
+        'pyyaml': 'yaml',
+        'python-dotenv': 'dotenv'
+    }
     
     missing_packages = []
     
-    for package in required_packages:
+    for pip_name, import_name in package_imports.items():
         try:
-            __import__(package.replace('-', '_'))
-            print(f"   ✅ {package}")
+            __import__(import_name)
+            print(f"   ✅ {pip_name}")
         except ImportError:
-            print(f"   ❌ {package}")
-            missing_packages.append(package)
+            print(f"   ❌ {pip_name}")
+            missing_packages.append(pip_name)
     
     if missing_packages:
         print(f"\n❌ Missing packages: {', '.join(missing_packages)}")
