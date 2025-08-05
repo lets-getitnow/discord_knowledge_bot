@@ -24,7 +24,7 @@ class MessageCollector:
     async def collect_channel_messages(self, channel, limit: Optional[int] = None) -> List[discord.Message]:
         """Collect all messages from a channel with pagination."""
         messages = []
-        last_message_id = None
+        last_message = None
         
         try:
             while True:
@@ -40,8 +40,8 @@ class MessageCollector:
                 
                 # Fetch messages using async iteration
                 channel_messages = []
-                if last_message_id:
-                    async for message in channel.history(limit=fetch_limit, before=last_message_id):
+                if last_message:
+                    async for message in channel.history(limit=fetch_limit, before=last_message):
                         channel_messages.append(message)
                 else:
                     async for message in channel.history(limit=fetch_limit):
@@ -52,7 +52,7 @@ class MessageCollector:
                 
                 # Add messages to collection
                 messages.extend(channel_messages)
-                last_message_id = channel_messages[-1].id
+                last_message = channel_messages[-1]
                 
                 logger.info(f"Collected {len(channel_messages)} messages from {channel.name} (total: {len(messages)})")
                 
@@ -86,7 +86,7 @@ class MessageCollector:
     
     async def collect_messages_generator(self, channel, limit: Optional[int] = None) -> AsyncGenerator[List[discord.Message], None]:
         """Generator for collecting messages in batches."""
-        last_message_id = None
+        last_message = None
         total_collected = 0
         
         while True:
@@ -102,8 +102,8 @@ class MessageCollector:
             
             # Fetch messages using async iteration
             channel_messages = []
-            if last_message_id:
-                async for message in channel.history(limit=batch_size, before=last_message_id):
+            if last_message:
+                async for message in channel.history(limit=batch_size, before=last_message):
                     channel_messages.append(message)
             else:
                 async for message in channel.history(limit=batch_size):
@@ -113,7 +113,7 @@ class MessageCollector:
                 break
             
             total_collected += len(channel_messages)
-            last_message_id = channel_messages[-1].id
+            last_message = channel_messages[-1]
             
             yield channel_messages
             
