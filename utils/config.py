@@ -28,6 +28,24 @@ def validate_discord_token(token):
     
     return True, "Token is present"
 
+def validate_app_id(app_id):
+    """Check if Discord application ID exists and is valid."""
+    if not app_id:
+        return False, "Application ID is None or empty"
+    
+    if not isinstance(app_id, str):
+        return False, f"Application ID is not a string, got {type(app_id)}"
+    
+    app_id = app_id.strip()
+    if not app_id:
+        return False, "Application ID is empty after stripping whitespace"
+    
+    # Check if it's a valid numeric string
+    if not app_id.isdigit():
+        return False, "Application ID must be numeric"
+    
+    return True, "Application ID is present"
+
 def load_config():
     """Load configuration from config.yaml and environment variables."""
     config_path = "config.yaml"
@@ -64,6 +82,27 @@ def load_config():
         logger.error("DISCORD_TOKEN environment variable is not set")
         raise ValueError("DISCORD_TOKEN environment variable is required")
     
+    # Load and validate Discord application ID
+    discord_app_id = os.getenv('DISCORD_APP_ID')
+    logger.info(f"Discord application ID loaded from environment: {'Present' if discord_app_id else 'Missing'}")
+    
+    if discord_app_id:
+        # Log app ID details (safely)
+        app_id_preview = discord_app_id[:4] + "..." + discord_app_id[-4:] if len(discord_app_id) > 8 else "***"
+        logger.info(f"Application ID preview: {app_id_preview}")
+        logger.info(f"Application ID length: {len(discord_app_id)} characters")
+        
+        # Validate app ID format
+        is_valid, validation_msg = validate_app_id(discord_app_id)
+        if not is_valid:
+            logger.error(f"Discord application ID validation failed: {validation_msg}")
+            raise ValueError(f"Invalid Discord application ID: {validation_msg}")
+        else:
+            logger.info(f"Discord application ID validation passed: {validation_msg}")
+    else:
+        logger.error("DISCORD_APP_ID environment variable is not set")
+        raise ValueError("DISCORD_APP_ID environment variable is required")
+    
     # Load OpenAI API key
     openai_key = os.getenv('OPENAI_API_KEY')
     logger.info(f"OpenAI API key loaded from environment: {'Present' if openai_key else 'Missing'}")
@@ -74,6 +113,7 @@ def load_config():
     
     # Override config with environment variables
     config['bot']['token'] = discord_token
+    config['bot']['app_id'] = discord_app_id
     config['openai']['api_key'] = openai_key
     
     logger.info("Configuration loaded successfully")

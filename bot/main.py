@@ -35,8 +35,7 @@ class DiscordKnowledgeBot(commands.Bot):
         
         super().__init__(
             command_prefix=config['bot']['prefix'],
-            intents=intents,
-            help_command=None
+            intents=intents
         )
         
         # Initialize components
