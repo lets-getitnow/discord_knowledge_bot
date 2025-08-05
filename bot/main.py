@@ -72,6 +72,11 @@ class DiscordKnowledgeBot(commands.Bot):
         for command in self.commands:
             logger.info(f"  - {command.name}: {command.help or 'No description'}")
         
+        # Sync slash commands with Discord API
+        logger.info("Syncing slash commands with Discord...")
+        await self.tree.sync()
+        logger.info("Slash commands synced successfully!")
+        
         logger.info("Bot setup complete!")
     
     async def on_ready(self):

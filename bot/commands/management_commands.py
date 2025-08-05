@@ -4,6 +4,7 @@ Handles status, stats, and clear operations.
 """
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 import logging
 from utils.error_handler import log_error_with_context
@@ -17,8 +18,8 @@ class ManagementCommands(commands.Cog):
         """Initialize the management commands."""
         self.bot = bot
     
-    @commands.command(name="status")
-    async def status(self, ctx):
+    @app_commands.command(name="status", description="Show the current status of the bot and indexing.")
+    async def status(self, interaction: discord.Interaction):
         """Show the current status of the bot and indexing."""
         try:
             # Get collection stats
@@ -49,14 +50,14 @@ class ManagementCommands(commands.Cog):
             status_msg += f"📡 **Latency**: {round(self.bot.latency * 1000)}ms\n"
             status_msg += f"🏠 **Guilds**: {len(self.bot.guilds)}\n"
             
-            await ctx.send(status_msg)
+            await interaction.response.send_message(status_msg)
             
         except Exception as e:
             log_error_with_context(e, "status command")
-            await ctx.send(f"❌ An error occurred while getting status: {str(e)}")
+            await interaction.response.send_message(f"❌ An error occurred while getting status: {str(e)}")
     
-    @commands.command(name="stats")
-    async def stats(self, ctx):
+    @app_commands.command(name="stats", description="Show detailed statistics about the indexed content.")
+    async def stats(self, interaction: discord.Interaction):
         """Show detailed statistics about the indexed content."""
         try:
             # Get collection stats
@@ -85,53 +86,84 @@ class ManagementCommands(commands.Cog):
                     percentage = (progress['processed'] / progress['total']) * 100
                     stats_msg += f"📈 **Progress**: {percentage:.1f}% ({progress['processed']}/{progress['total']})\n"
             
-            await ctx.send(stats_msg)
+            await interaction.response.send_message(stats_msg)
             
         except Exception as e:
             log_error_with_context(e, "stats command")
-            await ctx.send(f"❌ An error occurred while getting stats: {str(e)}")
+            await interaction.response.send_message(f"❌ An error occurred while getting stats: {str(e)}")
     
-    @commands.command(name="clear")
-    @commands.has_permissions(administrator=True)
-    async def clear(self, ctx):
-        """Clear all indexed data."""
-        # Confirm the action
-        confirm_msg = await ctx.send("⚠️ This will permanently delete all indexed data. Are you sure? (yes/no)")
-        
+    @app_commands.command(name="invite", description="Generate an invite URL for the bot.")
+    async def invite(self, interaction: discord.Interaction):
+        """Generate an invite URL for the bot."""
         try:
-            response = await self.bot.wait_for(
-                'message',
-                timeout=30.0,
-                check=lambda m: m.author == ctx.author and m.channel == ctx.channel
+            # Calculate required permissions
+            # Read Message History (for indexing)
+            # Send Messages (for responses)
+            # Read Messages (for chat functionality)
+            required_permissions = discord.Permissions(
+                read_message_history=True,
+                send_messages=True,
+                read_messages=True
             )
             
-            if response.content.lower() not in ['yes', 'y']:
-                await ctx.send("❌ Clear operation cancelled.")
-                return
-                
-        except TimeoutError:
-            await ctx.send("❌ Clear operation cancelled due to timeout.")
-            return
-        
-        try:
-            # Clear the collection
-            self.bot.storage.clear_collection()
-            await ctx.send("🗑️ All indexed data has been cleared successfully.")
+            # Generate invite URL
+            invite_url = discord.utils.oauth_url(
+                self.bot.user.id,
+                permissions=required_permissions,
+                scopes=("bot", "applications.commands")
+            )
+            
+            # Build invite message
+            invite_msg = "🔗 **Invite Discord Knowledge Bot**\n\n"
+            invite_msg += f"**Invite URL**: {invite_url}\n\n"
+            invite_msg += "**Required Permissions**:\n"
+            invite_msg += "• Read Message History (for indexing)\n"
+            invite_msg += "• Send Messages (for responses)\n"
+            invite_msg += "• Read Messages (for chat)\n\n"
+            invite_msg += "**Features**:\n"
+            invite_msg += "• AI-powered chat with server context\n"
+            invite_msg += "• Server content indexing\n"
+            invite_msg += "• Knowledge base search\n"
+            
+            await interaction.response.send_message(invite_msg)
             
         except Exception as e:
-            log_error_with_context(e, "clear command")
-            await ctx.send(f"❌ An error occurred while clearing data: {str(e)}")
+            log_error_with_context(e, "invite command")
+            await interaction.response.send_message(f"❌ An error occurred while generating invite URL: {str(e)}")
     
-
-    
-    @clear.error
-    async def clear_error(self, ctx, error):
-        """Handle errors in clear command."""
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ **Permission Denied**: You need Administrator permissions to clear indexed data.")
-        else:
-            log_error_with_context(error, "clear command error handler")
-            await ctx.send(f"❌ An error occurred: {str(error)}")
+    @app_commands.command(name="clear", description="Clear all indexed data.")
+    @app_commands.default_permissions(administrator=True)
+    async def clear(self, interaction: discord.Interaction):
+        """Clear all indexed data."""
+        # Check if user has administrator permissions
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to clear indexed data.")
+            return
+        
+        # Create confirmation button
+        class ConfirmView(discord.ui.View):
+            def __init__(self, bot):
+                super().__init__(timeout=30.0)
+                self.bot = bot
+            
+            @discord.ui.button(label="Yes, Clear All Data", style=discord.ButtonStyle.danger)
+            async def confirm(self, button_interaction: discord.Interaction, button: discord.ui.Button):
+                try:
+                    # Clear the collection
+                    self.bot.storage.clear_collection()
+                    await button_interaction.response.send_message("🗑️ All indexed data has been cleared successfully.")
+                except Exception as e:
+                    log_error_with_context(e, "clear command")
+                    await button_interaction.response.send_message(f"❌ An error occurred while clearing data: {str(e)}")
+                self.stop()
+            
+            @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+            async def cancel(self, button_interaction: discord.Interaction, button: discord.ui.Button):
+                await button_interaction.response.send_message("❌ Clear operation cancelled.")
+                self.stop()
+        
+        view = ConfirmView(self.bot)
+        await interaction.response.send_message("⚠️ This will permanently delete all indexed data. Are you sure?", view=view)
 
 async def setup(bot):
     """Set up the management commands cog."""

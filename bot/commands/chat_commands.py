@@ -4,6 +4,7 @@ Handles AI chat interactions.
 """
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 import logging
 from utils.error_handler import log_error_with_context
@@ -17,8 +18,9 @@ class ChatCommands(commands.Cog):
         """Initialize the chat commands."""
         self.bot = bot
     
-    @commands.command(name="ask")
-    async def ask(self, ctx, *, question: str):
+    @app_commands.command(name="ask", description="Ask a question and get an AI response.")
+    @app_commands.describe(question="Your question to ask the AI")
+    async def ask(self, interaction: discord.Interaction, question: str):
         """Ask a question and get an AI response based on indexed content."""
         try:
             # Build context
@@ -31,14 +33,15 @@ class ChatCommands(commands.Cog):
             if len(response) > 2000:
                 # Split long responses
                 chunks = [response[i:i+1900] for i in range(0, len(response), 1900)]
-                for i, chunk in enumerate(chunks):
-                    await ctx.send(f"🤖 **AI Response (Part {i+1}/{len(chunks)})**\n{chunk}")
+                await interaction.response.send_message(f"🤖 **AI Response (Part 1/{len(chunks)})**\n{chunks[0]}")
+                for i, chunk in enumerate(chunks[1:], 2):
+                    await interaction.followup.send(f"🤖 **AI Response (Part {i}/{len(chunks)})**\n{chunk}")
             else:
-                await ctx.send(f"🤖 **AI Response**\n{response}")
+                await interaction.response.send_message(f"🤖 **AI Response**\n{response}")
                 
         except Exception as e:
             log_error_with_context(e, "ask command")
-            await ctx.send(f"❌ An error occurred while processing your question: {str(e)}")
+            await interaction.response.send_message(f"❌ An error occurred while processing your question: {str(e)}")
 
 async def setup(bot):
     """Set up the chat commands cog."""

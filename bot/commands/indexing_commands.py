@@ -4,6 +4,7 @@ Handles server and channel indexing operations.
 """
 
 import discord
+from discord import app_commands
 from discord.ext import commands
 import logging
 from typing import Optional
@@ -18,11 +19,11 @@ class IndexingCommands(commands.Cog):
         """Initialize the indexing commands."""
         self.bot = bot
     
-    def get_target_guild(self, ctx):
+    def get_target_guild(self, interaction):
         """Get the target guild for indexing operations."""
         # If in a server, use that server
-        if ctx.guild:
-            return ctx.guild
+        if interaction.guild:
+            return interaction.guild
         
         # If in DM, use the first available server
         if len(self.bot.guilds) == 0:
@@ -34,193 +35,204 @@ class IndexingCommands(commands.Cog):
             # For now, use the first one
             return self.bot.guilds[0]
     
-    @commands.command(name="index-server")
-    @commands.has_permissions(administrator=True)
-    async def index_server(self, ctx):
+    @app_commands.command(name="index-server", description="Index all text channels in the server.")
+    @app_commands.default_permissions(administrator=True)
+    async def index_server(self, interaction: discord.Interaction):
         """Index all text channels in the server."""
+        # Check if user has administrator permissions
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
+            return
+        
         # Get target guild
-        target_guild = self.get_target_guild(ctx)
+        target_guild = self.get_target_guild(interaction)
         if not target_guild:
-            await ctx.send("❌ No servers available for indexing.")
+            await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
         if self.bot.is_indexing:
-            await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
+            await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
-        await ctx.send(f"🔄 Starting server indexing for {target_guild.name}... This may take a while.")
+        await interaction.response.send_message(f"🔄 Starting server indexing for {target_guild.name}... This may take a while.")
         
         try:
             success, message = await self.bot.start_indexing(target_guild.id)
             
             if success:
                 stats = self.bot.storage.get_collection_stats()
-                await ctx.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
+                await interaction.followup.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
             else:
-                await ctx.send(f"❌ {message}")
+                await interaction.followup.send(f"❌ {message}")
                 
         except Exception as e:
             log_error_with_context(e, "index_server command")
-            await ctx.send(f"❌ An error occurred during indexing: {str(e)}")
+            await interaction.followup.send(f"❌ An error occurred during indexing: {str(e)}")
     
-    @commands.command(name="index-channel")
-    @commands.has_permissions(administrator=True)
-    async def index_channel(self, ctx, channel: Optional[discord.TextChannel] = None):
+    @app_commands.command(name="index-channel", description="Index a specific channel.")
+    @app_commands.describe(channel="The channel to index (optional)")
+    @app_commands.default_permissions(administrator=True)
+    async def index_channel(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None):
         """Index a specific channel. If no channel is specified, indexes the current channel."""
+        # Check if user has administrator permissions
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
+            return
+        
         # Get target guild
-        target_guild = self.get_target_guild(ctx)
+        target_guild = self.get_target_guild(interaction)
         if not target_guild:
-            await ctx.send("❌ No servers available for indexing.")
+            await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
         if self.bot.is_indexing:
-            await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
+            await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
         # If in DM and no channel specified, we can't index a specific channel
-        if ctx.guild is None and channel is None:
-            await ctx.send("❌ Please specify a channel when using this command in DMs.")
+        if interaction.guild is None and channel is None:
+            await interaction.response.send_message("❌ Please specify a channel when using this command in DMs.")
             return
         
-        target_channel = channel or ctx.channel
+        target_channel = channel or interaction.channel
         
-        await ctx.send(f"🔄 Starting channel indexing for #{target_channel.name}... This may take a while.")
+        await interaction.response.send_message(f"🔄 Starting channel indexing for #{target_channel.name}... This may take a while.")
         
         try:
             success, message = await self.bot.start_indexing(target_guild.id, target_channel.id)
             
             if success:
                 stats = self.bot.storage.get_collection_stats()
-                await ctx.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
+                await interaction.followup.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
             else:
-                await ctx.send(f"❌ {message}")
+                await interaction.followup.send(f"❌ {message}")
                 
         except Exception as e:
             log_error_with_context(e, "index_channel command")
-            await ctx.send(f"❌ An error occurred during indexing: {str(e)}")
+            await interaction.followup.send(f"❌ An error occurred during indexing: {str(e)}")
     
-    @commands.command(name="reindex-server")
-    @commands.has_permissions(administrator=True)
-    async def reindex_server(self, ctx):
+    @app_commands.command(name="reindex-server", description="Clear and reindex all text channels.")
+    @app_commands.default_permissions(administrator=True)
+    async def reindex_server(self, interaction: discord.Interaction):
         """Clear existing index and reindex all text channels in the server."""
+        # Check if user has administrator permissions
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
+            return
+        
         # Get target guild
-        target_guild = self.get_target_guild(ctx)
+        target_guild = self.get_target_guild(interaction)
         if not target_guild:
-            await ctx.send("❌ No servers available for indexing.")
+            await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
         if self.bot.is_indexing:
-            await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
+            await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
-        # Confirm the action
-        confirm_msg = await ctx.send(f"⚠️ This will clear all existing indexed data and reindex {target_guild.name}. Are you sure? (yes/no)")
-        
-        try:
-            response = await self.bot.wait_for(
-                'message',
-                timeout=30.0,
-                check=lambda m: m.author == ctx.author and m.channel == ctx.channel
-            )
+        # Create confirmation view
+        class ReindexConfirmView(discord.ui.View):
+            def __init__(self, bot, target_guild):
+                super().__init__(timeout=30.0)
+                self.bot = bot
+                self.target_guild = target_guild
             
-            if response.content.lower() not in ['yes', 'y']:
-                await ctx.send("❌ Reindexing cancelled.")
-                return
+            @discord.ui.button(label="Yes, Reindex Server", style=discord.ButtonStyle.danger)
+            async def confirm(self, button_interaction: discord.Interaction, button: discord.ui.Button):
+                await button_interaction.response.send_message(f"🔄 Clearing existing index and starting server reindexing for {self.target_guild.name}... This may take a while.")
                 
-        except TimeoutError:
-            await ctx.send("❌ Reindexing cancelled due to timeout.")
-            return
-        
-        await ctx.send(f"🔄 Clearing existing index and starting server reindexing for {target_guild.name}... This may take a while.")
-        
-        try:
-            # Clear existing index
-            self.bot.storage.clear_collection()
-            await ctx.send("🗑️ Cleared existing index.")
+                try:
+                    # Clear existing index
+                    self.bot.storage.clear_collection()
+                    await button_interaction.followup.send("🗑️ Cleared existing index.")
+                    
+                    # Start reindexing
+                    success, message = await self.bot.start_indexing(self.target_guild.id)
+                    
+                    if success:
+                        stats = self.bot.storage.get_collection_stats()
+                        await button_interaction.followup.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
+                    else:
+                        await button_interaction.followup.send(f"❌ {message}")
+                        
+                except Exception as e:
+                    log_error_with_context(e, "reindex_server command")
+                    await button_interaction.followup.send(f"❌ An error occurred during reindexing: {str(e)}")
+                self.stop()
             
-            # Start reindexing
-            success, message = await self.bot.start_indexing(target_guild.id)
-            
-            if success:
-                stats = self.bot.storage.get_collection_stats()
-                await ctx.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
-            else:
-                await ctx.send(f"❌ {message}")
-                
-        except Exception as e:
-            log_error_with_context(e, "reindex_server command")
-            await ctx.send(f"❌ An error occurred during reindexing: {str(e)}")
+            @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+            async def cancel(self, button_interaction: discord.Interaction, button: discord.ui.Button):
+                await button_interaction.response.send_message("❌ Reindexing cancelled.")
+                self.stop()
+        
+        view = ReindexConfirmView(self.bot, target_guild)
+        await interaction.response.send_message(f"⚠️ This will clear all existing indexed data and reindex {target_guild.name}. Are you sure?", view=view)
     
-    @commands.command(name="reindex-channel")
-    @commands.has_permissions(administrator=True)
-    async def reindex_channel(self, ctx, channel: Optional[discord.TextChannel] = None):
+    @app_commands.command(name="reindex-channel", description="Clear and reindex a specific channel.")
+    @app_commands.describe(channel="The channel to reindex (optional)")
+    @app_commands.default_permissions(administrator=True)
+    async def reindex_channel(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None):
         """Clear existing index and reindex a specific channel. If no channel is specified, reindexes the current channel."""
+        # Check if user has administrator permissions
+        if not interaction.user.guild_permissions.administrator:
+            await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
+            return
+        
         # Get target guild
-        target_guild = self.get_target_guild(ctx)
+        target_guild = self.get_target_guild(interaction)
         if not target_guild:
-            await ctx.send("❌ No servers available for indexing.")
+            await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
         if self.bot.is_indexing:
-            await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
+            await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
         # If in DM and no channel specified, we can't reindex a specific channel
-        if ctx.guild is None and channel is None:
-            await ctx.send("❌ Please specify a channel when using this command in DMs.")
+        if interaction.guild is None and channel is None:
+            await interaction.response.send_message("❌ Please specify a channel when using this command in DMs.")
             return
         
-        target_channel = channel or ctx.channel
+        target_channel = channel or interaction.channel
         
-        # Confirm the action
-        confirm_msg = await ctx.send(f"⚠️ This will clear all existing indexed data and reindex #{target_channel.name}. Are you sure? (yes/no)")
-        
-        try:
-            response = await self.bot.wait_for(
-                'message',
-                timeout=30.0,
-                check=lambda m: m.author == ctx.author and m.channel == ctx.channel
-            )
+        # Create confirmation view
+        class ReindexChannelConfirmView(discord.ui.View):
+            def __init__(self, bot, target_guild, target_channel):
+                super().__init__(timeout=30.0)
+                self.bot = bot
+                self.target_guild = target_guild
+                self.target_channel = target_channel
             
-            if response.content.lower() not in ['yes', 'y']:
-                await ctx.send("❌ Reindexing cancelled.")
-                return
+            @discord.ui.button(label="Yes, Reindex Channel", style=discord.ButtonStyle.danger)
+            async def confirm(self, button_interaction: discord.Interaction, button: discord.ui.Button):
+                await button_interaction.response.send_message(f"🔄 Clearing existing index and starting channel reindexing for #{self.target_channel.name}... This may take a while.")
                 
-        except TimeoutError:
-            await ctx.send("❌ Reindexing cancelled due to timeout.")
-            return
-        
-        await ctx.send(f"🔄 Clearing existing index and starting channel reindexing for #{target_channel.name}... This may take a while.")
-        
-        try:
-            # Clear existing index
-            self.bot.storage.clear_collection()
-            await ctx.send("🗑️ Cleared existing index.")
+                try:
+                    # Clear existing index
+                    self.bot.storage.clear_collection()
+                    await button_interaction.followup.send("🗑️ Cleared existing index.")
+                    
+                    # Start reindexing
+                    success, message = await self.bot.start_indexing(self.target_guild.id, self.target_channel.id)
+                    
+                    if success:
+                        stats = self.bot.storage.get_collection_stats()
+                        await button_interaction.followup.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
+                    else:
+                        await button_interaction.followup.send(f"❌ {message}")
+                        
+                except Exception as e:
+                    log_error_with_context(e, "reindex_channel command")
+                    await button_interaction.followup.send(f"❌ An error occurred during reindexing: {str(e)}")
+                self.stop()
             
-            # Start reindexing
-            success, message = await self.bot.start_indexing(target_guild.id, target_channel.id)
-            
-            if success:
-                stats = self.bot.storage.get_collection_stats()
-                await ctx.send(f"✅ {message}\n📊 Total documents indexed: {stats['total_documents']}")
-            else:
-                await ctx.send(f"❌ {message}")
-                
-        except Exception as e:
-            log_error_with_context(e, "reindex_channel command")
-            await ctx.send(f"❌ An error occurred during reindexing: {str(e)}")
-    
-    @index_server.error
-    @index_channel.error
-    @reindex_server.error
-    @reindex_channel.error
-    async def indexing_error(self, ctx, error):
-        """Handle errors in indexing commands."""
-        if isinstance(error, commands.MissingPermissions):
-            await ctx.send("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
-        else:
-            log_error_with_context(error, "indexing command error handler")
-            await ctx.send(f"❌ An error occurred: {str(error)}")
+            @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary)
+            async def cancel(self, button_interaction: discord.Interaction, button: discord.ui.Button):
+                await button_interaction.response.send_message("❌ Reindexing cancelled.")
+                self.stop()
+        
+        view = ReindexChannelConfirmView(self.bot, target_guild, target_channel)
+        await interaction.response.send_message(f"⚠️ This will clear all existing indexed data and reindex #{target_channel.name}. Are you sure?", view=view)
 
 async def setup(bot):
     """Set up the indexing commands cog."""
