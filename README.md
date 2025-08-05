@@ -87,9 +87,7 @@ python main.py
 - `!help` - Show help information
 
 #### Chat Commands
-- `!search <query>` - Search for relevant content
 - `!ask <question>` - Ask a question and get AI response
-- `!context <query>` - Show context for a query
 
 #### Natural Chat
 Simply send a message to chat with the AI! The bot will search through indexed content to provide relevant answers.
