@@ -92,6 +92,7 @@ class ManagementCommands(commands.Cog):
             await ctx.send(f"❌ An error occurred while getting stats: {str(e)}")
     
     @commands.command(name="clear")
+    @commands.has_permissions(administrator=True)
     async def clear(self, ctx):
         """Clear all indexed data."""
         # Confirm the action
@@ -126,8 +127,11 @@ class ManagementCommands(commands.Cog):
     @clear.error
     async def clear_error(self, ctx, error):
         """Handle errors in clear command."""
-        log_error_with_context(error, "clear command error handler")
-        await ctx.send(f"❌ An error occurred: {str(error)}")
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("❌ **Permission Denied**: You need Administrator permissions to clear indexed data.")
+        else:
+            log_error_with_context(error, "clear command error handler")
+            await ctx.send(f"❌ An error occurred: {str(error)}")
 
 async def setup(bot):
     """Set up the management commands cog."""

@@ -35,6 +35,7 @@ class IndexingCommands(commands.Cog):
             return self.bot.guilds[0]
     
     @commands.command(name="index-server")
+    @commands.has_permissions(administrator=True)
     async def index_server(self, ctx):
         """Index all text channels in the server."""
         # Get target guild
@@ -63,6 +64,7 @@ class IndexingCommands(commands.Cog):
             await ctx.send(f"❌ An error occurred during indexing: {str(e)}")
     
     @commands.command(name="index-channel")
+    @commands.has_permissions(administrator=True)
     async def index_channel(self, ctx, channel: Optional[discord.TextChannel] = None):
         """Index a specific channel. If no channel is specified, indexes the current channel."""
         # Get target guild
@@ -98,6 +100,7 @@ class IndexingCommands(commands.Cog):
             await ctx.send(f"❌ An error occurred during indexing: {str(e)}")
     
     @commands.command(name="reindex-server")
+    @commands.has_permissions(administrator=True)
     async def reindex_server(self, ctx):
         """Clear existing index and reindex all text channels in the server."""
         # Get target guild
@@ -149,6 +152,7 @@ class IndexingCommands(commands.Cog):
             await ctx.send(f"❌ An error occurred during reindexing: {str(e)}")
     
     @commands.command(name="reindex-channel")
+    @commands.has_permissions(administrator=True)
     async def reindex_channel(self, ctx, channel: Optional[discord.TextChannel] = None):
         """Clear existing index and reindex a specific channel. If no channel is specified, reindexes the current channel."""
         # Get target guild
@@ -212,8 +216,11 @@ class IndexingCommands(commands.Cog):
     @reindex_channel.error
     async def indexing_error(self, ctx, error):
         """Handle errors in indexing commands."""
-        log_error_with_context(error, "indexing command error handler")
-        await ctx.send(f"❌ An error occurred: {str(error)}")
+        if isinstance(error, commands.MissingPermissions):
+            await ctx.send("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
+        else:
+            log_error_with_context(error, "indexing command error handler")
+            await ctx.send(f"❌ An error occurred: {str(error)}")
 
 async def setup(bot):
     """Set up the indexing commands cog."""
