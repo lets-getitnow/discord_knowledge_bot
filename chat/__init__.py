@@ -1,0 +1,1 @@
+# Chat package for Discord Knowledge Bot 

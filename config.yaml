@@ -1,0 +1,27 @@
+# Discord Knowledge Bot Configuration
+
+# Bot Configuration
+bot:
+  prefix: "!"
+  intents:
+    message_content: true
+    guilds: true
+    messages: true
+
+# OpenAI Configuration
+openai:
+  model: "gpt-3.5-turbo"
+  embedding_model: "text-embedding-ada-002"
+  max_tokens: 1000
+  temperature: 0.7
+
+# ChromaDB Configuration
+chromadb:
+  persist_directory: "./data"
+  collection_name: "discord_knowledge"
+
+# Indexing Configuration
+indexing:
+  chunk_size: 1000
+  max_messages_per_request: 100
+  rate_limit_delay: 1.0 
