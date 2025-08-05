@@ -11,6 +11,7 @@ from typing import Optional
 from asyncio import TimeoutError
 
 from utils.config import config
+from utils.error_handler import log_error_with_context, validate_object, safe_execute
 from indexing.storage import ChromaStorage
 from indexing.collector import MessageCollector
 from chat.ai_interface import AIInterface
@@ -147,7 +148,7 @@ class DiscordKnowledgeBot(commands.Bot):
             return True, "Indexing completed successfully"
             
         except Exception as e:
-            logger.error(f"Indexing error: {e}")
+            log_error_with_context(e, "indexing process")
             return False, f"Indexing failed: {str(e)}"
         finally:
             self.is_indexing = False
@@ -172,24 +173,35 @@ class DiscordKnowledgeBot(commands.Bot):
             # Prepare documents for storage
             documents = []
             for j, message in enumerate(batch):
-                doc_id = f"{message.guild.id}_{message.channel.id}_{message.id}"
-                metadata = {
-                    'guild_id': message.guild.id,
-                    'guild_name': message.guild.name,
-                    'channel_id': message.channel.id,
-                    'channel_name': message.channel.name,
-                    'message_id': message.id,
-                    'author_id': message.author.id,
-                    'author_name': message.author.display_name,
-                    'timestamp': message.created_at.isoformat(),
-                    'content': message.content
-                }
+                # Validate message object
+                if not validate_object(message, ['guild', 'channel', 'id'], f"processing message {j}"):
+                    continue
                 
-                documents.append({
-                    'text': message.content,
-                    'metadata': metadata,
-                    'id': doc_id
-                })
+                try:
+                    doc_id = f"{message.guild.id}_{message.channel.id}_{message.id}"
+                    metadata = {
+                        'guild_id': message.guild.id,
+                        'guild_name': message.guild.name,
+                        'channel_id': message.channel.id,
+                        'channel_name': message.channel.name,
+                        'message_id': message.id,
+                        'author_id': message.author.id,
+                        'author_name': message.author.display_name,
+                        'timestamp': message.created_at.isoformat(),
+                        'content': message.content
+                    }
+                    
+                    documents.append({
+                        'text': message.content,
+                        'metadata': metadata,
+                        'id': doc_id
+                    })
+                except Exception as e:
+                    log_error_with_context(e, f"processing message {j}", {
+                        'message_type': type(message),
+                        'message_content': str(message)
+                    })
+                    continue
             
             if documents:
                 # Prepare for storage
@@ -222,24 +234,35 @@ class DiscordKnowledgeBot(commands.Bot):
         # Prepare documents for storage
         documents = []
         for message in text_messages:
-            doc_id = f"{message.guild.id}_{message.channel.id}_{message.id}"
-            metadata = {
-                'guild_id': message.guild.id,
-                'guild_name': message.guild.name,
-                'channel_id': message.channel.id,
-                'channel_name': message.channel.name,
-                'message_id': message.id,
-                'author_id': message.author.id,
-                'author_name': message.author.display_name,
-                'timestamp': message.created_at.isoformat(),
-                'content': message.content
-            }
+            # Validate message object
+            if not validate_object(message, ['guild', 'channel', 'id'], "processing channel message"):
+                continue
             
-            documents.append({
-                'text': message.content,
-                'metadata': metadata,
-                'id': doc_id
-            })
+            try:
+                doc_id = f"{message.guild.id}_{message.channel.id}_{message.id}"
+                metadata = {
+                    'guild_id': message.guild.id,
+                    'guild_name': message.guild.name,
+                    'channel_id': message.channel.id,
+                    'channel_name': message.channel.name,
+                    'message_id': message.id,
+                    'author_id': message.author.id,
+                    'author_name': message.author.display_name,
+                    'timestamp': message.created_at.isoformat(),
+                    'content': message.content
+                }
+                
+                documents.append({
+                    'text': message.content,
+                    'metadata': metadata,
+                    'id': doc_id
+                })
+            except Exception as e:
+                log_error_with_context(e, "processing channel message", {
+                    'message_type': type(message),
+                    'message_content': str(message)
+                })
+                continue
         
         if documents:
             # Prepare for storage

@@ -9,6 +9,7 @@ import asyncio
 import logging
 from utils.helpers import rate_limit_delay
 from utils.config import config
+from utils.error_handler import log_error_with_context, validate_object
 
 logger = logging.getLogger(__name__)
 
@@ -37,16 +38,14 @@ class MessageCollector:
                 if limit and len(messages) >= limit:
                     break
                 
-                # Fetch messages
+                # Fetch messages using async iteration
+                channel_messages = []
                 if last_message_id:
-                    channel_messages = await channel.history(
-                        limit=fetch_limit,
-                        before=last_message_id
-                    ).flatten()
+                    async for message in channel.history(limit=fetch_limit, before=last_message_id):
+                        channel_messages.append(message)
                 else:
-                    channel_messages = await channel.history(
-                        limit=fetch_limit
-                    ).flatten()
+                    async for message in channel.history(limit=fetch_limit):
+                        channel_messages.append(message)
                 
                 if not channel_messages:
                     break
@@ -61,7 +60,7 @@ class MessageCollector:
                 await rate_limit_delay(self.rate_limit_delay)
                 
         except Exception as e:
-            logger.error(f"Error collecting messages from {channel.name}: {e}")
+            log_error_with_context(e, f"collecting messages from {channel.name}")
             raise
         
         return messages
@@ -101,16 +100,14 @@ class MessageCollector:
             else:
                 batch_size = self.max_messages_per_request
             
-            # Fetch messages
+            # Fetch messages using async iteration
+            channel_messages = []
             if last_message_id:
-                channel_messages = await channel.history(
-                    limit=batch_size,
-                    before=last_message_id
-                ).flatten()
+                async for message in channel.history(limit=batch_size, before=last_message_id):
+                    channel_messages.append(message)
             else:
-                channel_messages = await channel.history(
-                    limit=batch_size
-                ).flatten()
+                async for message in channel.history(limit=batch_size):
+                    channel_messages.append(message)
             
             if not channel_messages:
                 break

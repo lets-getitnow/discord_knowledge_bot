@@ -6,6 +6,7 @@ Handles status, stats, and clear operations.
 import discord
 from discord.ext import commands
 import logging
+from utils.error_handler import log_error_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class ManagementCommands(commands.Cog):
             await ctx.send(status_msg)
             
         except Exception as e:
-            logger.error(f"Error in status command: {e}")
+            log_error_with_context(e, "status command")
             await ctx.send(f"❌ An error occurred while getting status: {str(e)}")
     
     @commands.command(name="stats")
@@ -87,7 +88,7 @@ class ManagementCommands(commands.Cog):
             await ctx.send(stats_msg)
             
         except Exception as e:
-            logger.error(f"Error in stats command: {e}")
+            log_error_with_context(e, "stats command")
             await ctx.send(f"❌ An error occurred while getting stats: {str(e)}")
     
     @commands.command(name="clear")
@@ -117,7 +118,7 @@ class ManagementCommands(commands.Cog):
             await ctx.send("🗑️ All indexed data has been cleared successfully.")
             
         except Exception as e:
-            logger.error(f"Error in clear command: {e}")
+            log_error_with_context(e, "clear command")
             await ctx.send(f"❌ An error occurred while clearing data: {str(e)}")
     
 
@@ -125,7 +126,7 @@ class ManagementCommands(commands.Cog):
     @clear.error
     async def clear_error(self, ctx, error):
         """Handle errors in clear command."""
-        logger.error(f"Error in clear command: {error}")
+        log_error_with_context(error, "clear command error handler")
         await ctx.send(f"❌ An error occurred: {str(error)}")
 
 async def setup(bot):

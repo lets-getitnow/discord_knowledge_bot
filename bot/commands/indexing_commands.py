@@ -7,6 +7,7 @@ import discord
 from discord.ext import commands
 import logging
 from typing import Optional
+from utils.error_handler import log_error_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class IndexingCommands(commands.Cog):
                 await ctx.send(f"❌ {message}")
                 
         except Exception as e:
-            logger.error(f"Error in index_server command: {e}")
+            log_error_with_context(e, "index_server command")
             await ctx.send(f"❌ An error occurred during indexing: {str(e)}")
     
     @commands.command(name="index-channel")
@@ -93,7 +94,7 @@ class IndexingCommands(commands.Cog):
                 await ctx.send(f"❌ {message}")
                 
         except Exception as e:
-            logger.error(f"Error in index_channel command: {e}")
+            log_error_with_context(e, "index_channel command")
             await ctx.send(f"❌ An error occurred during indexing: {str(e)}")
     
     @commands.command(name="reindex-server")
@@ -144,7 +145,7 @@ class IndexingCommands(commands.Cog):
                 await ctx.send(f"❌ {message}")
                 
         except Exception as e:
-            logger.error(f"Error in reindex_server command: {e}")
+            log_error_with_context(e, "reindex_server command")
             await ctx.send(f"❌ An error occurred during reindexing: {str(e)}")
     
     @commands.command(name="reindex-channel")
@@ -202,7 +203,7 @@ class IndexingCommands(commands.Cog):
                 await ctx.send(f"❌ {message}")
                 
         except Exception as e:
-            logger.error(f"Error in reindex_channel command: {e}")
+            log_error_with_context(e, "reindex_channel command")
             await ctx.send(f"❌ An error occurred during reindexing: {str(e)}")
     
     @index_server.error
@@ -211,7 +212,7 @@ class IndexingCommands(commands.Cog):
     @reindex_channel.error
     async def indexing_error(self, ctx, error):
         """Handle errors in indexing commands."""
-        logger.error(f"Error in indexing command: {error}")
+        log_error_with_context(error, "indexing command error handler")
         await ctx.send(f"❌ An error occurred: {str(error)}")
 
 async def setup(bot):

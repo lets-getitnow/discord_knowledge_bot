@@ -6,6 +6,7 @@ Handles AI chat interactions.
 import discord
 from discord.ext import commands
 import logging
+from utils.error_handler import log_error_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class ChatCommands(commands.Cog):
                 await ctx.send(f"🤖 **AI Response**\n{response}")
                 
         except Exception as e:
-            logger.error(f"Error in ask command: {e}")
+            log_error_with_context(e, "ask command")
             await ctx.send(f"❌ An error occurred while processing your question: {str(e)}")
 
 async def setup(bot):
