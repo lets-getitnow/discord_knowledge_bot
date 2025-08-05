@@ -17,17 +17,39 @@ class IndexingCommands(commands.Cog):
         """Initialize the indexing commands."""
         self.bot = bot
     
+    def get_target_guild(self, ctx):
+        """Get the target guild for indexing operations."""
+        # If in a server, use that server
+        if ctx.guild:
+            return ctx.guild
+        
+        # If in DM, use the first available server
+        if len(self.bot.guilds) == 0:
+            return None
+        elif len(self.bot.guilds) == 1:
+            return self.bot.guilds[0]
+        else:
+            # Multiple servers - could prompt user to choose
+            # For now, use the first one
+            return self.bot.guilds[0]
+    
     @commands.command(name="index-server")
     async def index_server(self, ctx):
         """Index all text channels in the server."""
+        # Get target guild
+        target_guild = self.get_target_guild(ctx)
+        if not target_guild:
+            await ctx.send("❌ No servers available for indexing.")
+            return
+        
         if self.bot.is_indexing:
             await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
-        await ctx.send("🔄 Starting server indexing... This may take a while.")
+        await ctx.send(f"🔄 Starting server indexing for {target_guild.name}... This may take a while.")
         
         try:
-            success, message = await self.bot.start_indexing(ctx.guild.id)
+            success, message = await self.bot.start_indexing(target_guild.id)
             
             if success:
                 stats = self.bot.storage.get_collection_stats()
@@ -42,8 +64,19 @@ class IndexingCommands(commands.Cog):
     @commands.command(name="index-channel")
     async def index_channel(self, ctx, channel: Optional[discord.TextChannel] = None):
         """Index a specific channel. If no channel is specified, indexes the current channel."""
+        # Get target guild
+        target_guild = self.get_target_guild(ctx)
+        if not target_guild:
+            await ctx.send("❌ No servers available for indexing.")
+            return
+        
         if self.bot.is_indexing:
             await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
+            return
+        
+        # If in DM and no channel specified, we can't index a specific channel
+        if ctx.guild is None and channel is None:
+            await ctx.send("❌ Please specify a channel when using this command in DMs.")
             return
         
         target_channel = channel or ctx.channel
@@ -51,7 +84,7 @@ class IndexingCommands(commands.Cog):
         await ctx.send(f"🔄 Starting channel indexing for #{target_channel.name}... This may take a while.")
         
         try:
-            success, message = await self.bot.start_indexing(ctx.guild.id, target_channel.id)
+            success, message = await self.bot.start_indexing(target_guild.id, target_channel.id)
             
             if success:
                 stats = self.bot.storage.get_collection_stats()
@@ -66,12 +99,18 @@ class IndexingCommands(commands.Cog):
     @commands.command(name="reindex-server")
     async def reindex_server(self, ctx):
         """Clear existing index and reindex all text channels in the server."""
+        # Get target guild
+        target_guild = self.get_target_guild(ctx)
+        if not target_guild:
+            await ctx.send("❌ No servers available for indexing.")
+            return
+        
         if self.bot.is_indexing:
             await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
         # Confirm the action
-        confirm_msg = await ctx.send("⚠️ This will clear all existing indexed data and reindex the entire server. Are you sure? (yes/no)")
+        confirm_msg = await ctx.send(f"⚠️ This will clear all existing indexed data and reindex {target_guild.name}. Are you sure? (yes/no)")
         
         try:
             response = await self.bot.wait_for(
@@ -88,7 +127,7 @@ class IndexingCommands(commands.Cog):
             await ctx.send("❌ Reindexing cancelled due to timeout.")
             return
         
-        await ctx.send("🔄 Clearing existing index and starting server reindexing... This may take a while.")
+        await ctx.send(f"🔄 Clearing existing index and starting server reindexing for {target_guild.name}... This may take a while.")
         
         try:
             # Clear existing index
@@ -96,7 +135,7 @@ class IndexingCommands(commands.Cog):
             await ctx.send("🗑️ Cleared existing index.")
             
             # Start reindexing
-            success, message = await self.bot.start_indexing(ctx.guild.id)
+            success, message = await self.bot.start_indexing(target_guild.id)
             
             if success:
                 stats = self.bot.storage.get_collection_stats()
@@ -111,8 +150,19 @@ class IndexingCommands(commands.Cog):
     @commands.command(name="reindex-channel")
     async def reindex_channel(self, ctx, channel: Optional[discord.TextChannel] = None):
         """Clear existing index and reindex a specific channel. If no channel is specified, reindexes the current channel."""
+        # Get target guild
+        target_guild = self.get_target_guild(ctx)
+        if not target_guild:
+            await ctx.send("❌ No servers available for indexing.")
+            return
+        
         if self.bot.is_indexing:
             await ctx.send("❌ Indexing is already in progress. Please wait for it to complete.")
+            return
+        
+        # If in DM and no channel specified, we can't reindex a specific channel
+        if ctx.guild is None and channel is None:
+            await ctx.send("❌ Please specify a channel when using this command in DMs.")
             return
         
         target_channel = channel or ctx.channel
@@ -143,7 +193,7 @@ class IndexingCommands(commands.Cog):
             await ctx.send("🗑️ Cleared existing index.")
             
             # Start reindexing
-            success, message = await self.bot.start_indexing(ctx.guild.id, target_channel.id)
+            success, message = await self.bot.start_indexing(target_guild.id, target_channel.id)
             
             if success:
                 stats = self.bot.storage.get_collection_stats()
