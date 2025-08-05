@@ -103,19 +103,18 @@ def load_config():
         logger.error("DISCORD_APP_ID environment variable is not set")
         raise ValueError("DISCORD_APP_ID environment variable is required")
     
-    # Load OpenAI API key (optional for chat functionality)
+    # Load OpenAI API key (required for chat functionality)
     openai_key = os.getenv('OPENAI_API_KEY')
     logger.info(f"OpenAI API key loaded from environment: {'Present' if openai_key else 'Missing'}")
+    
+    if not openai_key:
+        logger.error("OPENAI_API_KEY environment variable is not set")
+        raise ValueError("OPENAI_API_KEY environment variable is required")
     
     # Override config with environment variables
     config['bot']['token'] = discord_token
     config['bot']['app_id'] = discord_app_id
-    
-    if openai_key:
-        config['openai']['api_key'] = openai_key
-    else:
-        logger.warning("OpenAI API key not provided - chat functionality will be limited")
-        config['openai']['api_key'] = None
+    config['openai']['api_key'] = openai_key
     
     logger.info("Configuration loaded successfully")
     return config
