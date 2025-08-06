@@ -18,6 +18,11 @@ class ManagementCommands(commands.Cog):
         """Initialize the management commands."""
         self.bot = bot
     
+    @app_commands.command(name="ping", description="Test command to verify bot is working.")
+    async def ping(self, interaction: discord.Interaction):
+        """Test command to verify bot is working."""
+        await interaction.response.send_message("🏓 Pong!")
+    
     @app_commands.command(name="status", description="Show the current status of the bot and indexing.")
     async def status(self, interaction: discord.Interaction):
         """Show the current status of the bot and indexing."""

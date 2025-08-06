@@ -7,7 +7,7 @@ A Discord bot that indexes server content and provides AI-powered chat functiona
 - **Server Indexing**: Index all text channels in a Discord server
 - **Channel Indexing**: Index specific channels with pagination support
 - **AI Chat**: Natural language conversation with context from server content
-- **Search**: Find relevant content from indexed messages
+- **Context-Aware Search**: Channel-specific or server-wide search capabilities
 - **Reindexing**: Clear and rebuild indexes as needed
 - **Rate Limiting**: Respects Discord API limits
 - **Text-Only**: Focuses exclusively on text content
@@ -74,23 +74,40 @@ python main.py
 
 ### Bot Commands
 
-#### Indexing Commands
-- `!index-server` - Index all text channels in the server
-- `!index-channel [channel]` - Index a specific channel (or current channel)
-- `!reindex-server` - Clear and reindex all text channels
-- `!reindex-channel [channel]` - Clear and reindex a specific channel
+All commands are now slash commands (`/`) that appear in Discord's command interface.
+
+#### Indexing Commands (Admin Only)
+- `/index-server` - Index all text channels in the server
+- `/index-channel [channel]` - Index a specific channel (or current channel)
+- `/reindex-server` - Clear and reindex all text channels
+- `/reindex-channel [channel]` - Clear and reindex a specific channel
 
 #### Management Commands
-- `!status` - Show bot and indexing status
-- `!stats` - Show detailed statistics
-- `!clear` - Clear all indexed data
-- `!help` - Show help information
+- `/status` - Show bot and indexing status
+- `/stats` - Show detailed statistics
+- `/clear` - Clear all indexed data (Admin only)
+- `/invite` - Generate an invite URL for the bot
 
 #### Chat Commands
-- `!ask <question>` - Ask a question and get AI response
+- `/ask <question>` - Ask a question about **this channel's** content
+- `/ask-server <question>` - Ask a question about the **entire server's** content
 
 #### Natural Chat
 Simply send a message to chat with the AI! The bot will search through indexed content to provide relevant answers.
+
+### Context-Aware Search
+
+The bot now provides two types of search:
+
+1. **Channel-Specific Search** (`/ask`):
+   - Searches only within the current channel's indexed content
+   - Provides more focused, relevant responses
+   - Use when asking about channel-specific topics
+
+2. **Server-Wide Search** (`/ask-server`):
+   - Searches across all indexed channels in the server
+   - Provides broader context from the entire server
+   - Use when asking about server-wide topics or cross-channel information
 
 ### Permissions
 
@@ -111,10 +128,13 @@ bot:
 
 # OpenAI Configuration
 openai:
-  model: "gpt-3.5-turbo"
-  embedding_model: "text-embedding-ada-002"
+  model: "gpt-4o-mini"
   max_tokens: 1000
   temperature: 0.7
+
+# Local Embeddings Configuration
+embeddings:
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
 
 # ChromaDB Configuration
 chromadb:
@@ -134,7 +154,7 @@ indexing:
 
 1. **Discord Bot Core** (`bot/`)
    - Main bot functionality
-   - Command handling
+   - Slash command handling
    - Event processing
 
 2. **Indexing System** (`indexing/`)
@@ -144,7 +164,7 @@ indexing:
 
 3. **AI Chat System** (`chat/`)
    - OpenAI integration
-   - Context building
+   - Context building with channel filtering
    - Response generation
 
 4. **Utilities** (`utils/`)
@@ -154,115 +174,43 @@ indexing:
 ### Data Flow
 
 1. **Indexing**: Messages → Text Processing → ChromaDB Storage
-2. **Chat**: User Query → Search → Context Building → AI Response
-3. **Search**: Query → ChromaDB Search → Formatted Results
+2. **Chat**: User Query → Context-Aware Search → AI Response
+3. **Search**: Query → ChromaDB Search (with optional filtering) → Formatted Results
 
 ## Technical Details
 
 - **Text Processing**: MVP functionality with basic cleaning and chunking
-- **Rate Limiting**: Built-in delays to respect Discord API limits
-- **Pagination**: Handles multiple pages of message history
-- **Error Handling**: Comprehensive error handling and logging
-- **Local Storage**: ChromaDB for local vector storage
+- **Local Embeddings**: Uses sentence-transformers for local embedding generation
+- **Vector Search**: ChromaDB with LlamaIndex for semantic search
+- **Context Filtering**: Channel-specific search with metadata filtering
+- **Slash Commands**: Modern Discord slash command interface
+- **Permission System**: Admin-only commands for destructive operations
 
-## Limitations
+## Command Examples
 
-- Text-only content (no attachments, embeds, reactions)
-- Single-server focus
-- Local storage only
-- Requires "Manage Messages" permission for indexing
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Missing Environment Variables**
-   - Ensure `DISCORD_TOKEN` and `OPENAI_API_KEY` are set
-
-2. **Invalid Discord Token**
-   - Run `python test_setup.py` to validate your token
-   - Check that your token is correct and not expired
-   - Ensure the token is from a Discord bot application (not a user token)
-
-3. **Permission Errors**
-   - Bot needs "Manage Messages" permission for indexing commands
-
-4. **Rate Limiting**
-   - Bot includes built-in delays to respect Discord API limits
-
-5. **Storage Issues**
-   - Ensure write permissions for the `./data` directory
-
-### Debugging
-
-The bot now provides detailed error logging to help diagnose issues:
-
-#### Test Setup Script
-Run the test setup script to validate your configuration:
-```bash
-python test_setup.py
+### Indexing
+```
+/index-server
+/index-channel #general
+/reindex-server
 ```
 
-This will check:
-- Environment variables
-- Discord token format and validity
-- Required dependencies
-- Configuration files
-
-#### Enhanced Error Logging
-The bot now provides detailed error information including:
-- Token validation and format checking
-- Environment variable status
-- Discord API error details
-- Configuration loading issues
-
-#### Common Token Issues
-- **"Improper token has been passed"**: Usually means the token is invalid, expired, or malformed
-- **Token too short/long**: Discord tokens are typically ~59 characters
-- **Missing dots**: Discord tokens usually contain dots (.)
-- **Wrong token type**: Make sure you're using a bot token, not a user token
-
-### Logs
-
-The bot provides detailed logging. Check console output for:
-- Indexing progress
-- Error messages with detailed context
-- API rate limiting
-- Storage operations
-- Token validation results
-
-## Development
-
-### Project Structure
-
+### Chat
 ```
-discord_knowledge_bot/
-├── bot/
-│   ├── main.py
-│   └── commands/
-├── indexing/
-│   ├── collector.py
-│   ├── processor.py
-│   └── storage.py
-├── chat/
-│   ├── ai_interface.py
-│   └── context_builder.py
-├── utils/
-│   ├── config.py
-│   └── helpers.py
-├── main.py
-├── config.yaml
-├── requirements.txt
-└── README.md
+/ask What was discussed about the new feature?
+/ask-server Who mentioned the meeting yesterday?
 ```
 
-### Adding Features
+### Management
+```
+/status
+/stats
+/invite
+```
 
-1. **New Commands**: Add to appropriate cog in `bot/commands/`
-2. **New Processing**: Extend `indexing/processor.py`
-3. **New Storage**: Extend `indexing/storage.py`
-4. **New AI Features**: Extend `chat/ai_interface.py`
+## Security
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details. 
+- **Admin-Only Commands**: Indexing and destructive operations require Administrator permissions
+- **Permission Checks**: All commands verify user permissions before execution
+- **Confirmation Dialogs**: Destructive operations require explicit confirmation
+- **Error Handling**: Comprehensive error handling and logging 

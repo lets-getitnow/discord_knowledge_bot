@@ -51,12 +51,6 @@ class DiscordKnowledgeBot(commands.Bot):
         # Indexing status
         self.is_indexing = False
         self.indexing_progress = {}
-        
-        # Add a simple test command
-        @self.command(name="ping")
-        async def ping(ctx):
-            """Test command to verify bot is working."""
-            await ctx.send("🏓 Pong!")
     
     async def setup_hook(self):
         """Set up bot components."""
@@ -67,10 +61,10 @@ class DiscordKnowledgeBot(commands.Bot):
         await self.load_extension('bot.commands.chat_commands')
         await self.load_extension('bot.commands.management_commands')
         
-        # Log loaded commands
-        logger.info(f"Loaded {len(self.commands)} commands:")
-        for command in self.commands:
-            logger.info(f"  - {command.name}: {command.help or 'No description'}")
+        # Log loaded slash commands
+        logger.info(f"Loaded {len(self.tree.get_commands())} slash commands:")
+        for command in self.tree.get_commands():
+            logger.info(f"  - /{command.name}: {command.description or 'No description'}")
         
         # Sync slash commands with Discord API
         logger.info("Syncing slash commands with Discord...")
@@ -84,8 +78,9 @@ class DiscordKnowledgeBot(commands.Bot):
         logger.info(f'Logged in as {self.user} (ID: {self.user.id})')
         logger.info(f'Connected to {len(self.guilds)} guild(s)')
         
-        # Log available commands
-        logger.info(f"Available commands: {[cmd.name for cmd in self.commands]}")
+        # Log available slash commands
+        slash_commands = [f"/{cmd.name}" for cmd in self.tree.get_commands()]
+        logger.info(f"Available slash commands: {slash_commands}")
         
         # Set bot status
         await self.change_presence(activity=discord.Game(name="Indexing Knowledge"))

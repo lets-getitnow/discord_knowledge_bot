@@ -96,12 +96,48 @@ class ChromaStorage:
             logger.error(f"Failed to add documents: {e}")
             raise
     
-    def search(self, query: str, n_results: int = 5) -> List[Dict[str, Any]]:
-        """Search for similar documents using local embeddings."""
+    def search(self, query: str, n_results: int = 5, filter_metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """Search for similar documents using local embeddings with optional metadata filtering."""
         try:
             # Use LlamaIndex retriever for semantic search
             retriever = self.index.as_retriever(similarity_top_k=n_results)
             nodes = retriever.retrieve(query)
+            
+            # Apply metadata filtering if specified
+            if filter_metadata:
+                filtered_nodes = []
+                for node in nodes:
+                    # Check if node metadata matches all filter criteria
+                    matches_filter = True
+                    for key, value in filter_metadata.items():
+                        if key not in node.metadata or str(node.metadata[key]) != str(value):
+                            matches_filter = False
+                            break
+                    
+                    if matches_filter:
+                        filtered_nodes.append(node)
+                
+                # If filtering removed too many results, try to get more
+                if len(filtered_nodes) < n_results and len(nodes) > n_results:
+                    # Get more results and filter again
+                    retriever = self.index.as_retriever(similarity_top_k=min(n_results * 3, 50))
+                    more_nodes = retriever.retrieve(query)
+                    
+                    for node in more_nodes:
+                        if len(filtered_nodes) >= n_results:
+                            break
+                        
+                        # Check if node metadata matches all filter criteria
+                        matches_filter = True
+                        for key, value in filter_metadata.items():
+                            if key not in node.metadata or str(node.metadata[key]) != str(value):
+                                matches_filter = False
+                                break
+                        
+                        if matches_filter and node not in filtered_nodes:
+                            filtered_nodes.append(node)
+                
+                nodes = filtered_nodes
             
             # Format results to match expected interface
             formatted_results = []
