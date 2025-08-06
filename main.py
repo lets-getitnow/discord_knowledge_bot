@@ -19,12 +19,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-def generate_invite_link(app_id):
-    """Generate Discord bot invite link."""
-    permissions = "66560"  # Read Messages, Send Messages, Read Message History
-    scopes = "bot%20applications.commands"
-    return f"https://discord.com/api/oauth2/authorize?client_id={app_id}&permissions={permissions}&scope={scopes}"
-
 def main():
     """Main entry point for the Discord Knowledge Bot."""
     print("🤖 Starting Discord Knowledge Bot...")
@@ -54,18 +48,6 @@ def main():
             print(f"   - {var}: {preview} ({len(value)} chars)")
         else:
             print(f"   - {var}: Missing")
-    
-    # Generate and print invite link
-    app_id = os.getenv('DISCORD_APP_ID')
-    if app_id:
-        invite_link = generate_invite_link(app_id)
-        print(f"\n🔗 **Invite Link:**")
-        print(f"{invite_link}")
-        print(f"\n📋 **Instructions:**")
-        print(f"1. Copy the invite link above")
-        print(f"2. Open it in your browser")
-        print(f"3. Select your server and authorize the bot")
-        print(f"4. The bot will then appear in your server!")
     
     try:
         run_bot()

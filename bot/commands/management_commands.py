@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ext import commands
 import logging
 from utils.error_handler import log_error_with_context
+from utils.permissions import has_permission
 
 logger = logging.getLogger(__name__)
 
@@ -97,51 +98,12 @@ class ManagementCommands(commands.Cog):
             log_error_with_context(e, "stats command")
             await interaction.response.send_message(f"❌ An error occurred while getting stats: {str(e)}")
     
-    @app_commands.command(name="invite", description="Generate an invite URL for the bot.")
-    async def invite(self, interaction: discord.Interaction):
-        """Generate an invite URL for the bot."""
-        try:
-            # Calculate required permissions
-            # Read Message History (for indexing)
-            # Send Messages (for responses)
-            # Read Messages (for chat functionality)
-            required_permissions = discord.Permissions(
-                read_message_history=True,
-                send_messages=True,
-                read_messages=True
-            )
-            
-            # Generate invite URL
-            invite_url = discord.utils.oauth_url(
-                self.bot.user.id,
-                permissions=required_permissions,
-                scopes=("bot", "applications.commands")
-            )
-            
-            # Build invite message
-            invite_msg = "🔗 **Invite Discord Knowledge Bot**\n\n"
-            invite_msg += f"**Invite URL**: {invite_url}\n\n"
-            invite_msg += "**Required Permissions**:\n"
-            invite_msg += "• Read Message History (for indexing)\n"
-            invite_msg += "• Send Messages (for responses)\n"
-            invite_msg += "• Read Messages (for chat)\n\n"
-            invite_msg += "**Features**:\n"
-            invite_msg += "• AI-powered chat with server context\n"
-            invite_msg += "• Server content indexing\n"
-            invite_msg += "• Knowledge base search\n"
-            
-            await interaction.response.send_message(invite_msg)
-            
-        except Exception as e:
-            log_error_with_context(e, "invite command")
-            await interaction.response.send_message(f"❌ An error occurred while generating invite URL: {str(e)}")
-    
     @app_commands.command(name="clear", description="Clear all indexed data.")
     @app_commands.default_permissions(administrator=True)
     async def clear(self, interaction: discord.Interaction):
         """Clear all indexed data."""
-        # Check if user has administrator permissions
-        if not interaction.user.guild_permissions.administrator:
+        # Check if user has administrator permissions or is superuser
+        if not has_permission(interaction.user.id, interaction.user.guild_permissions, "administrator"):
             await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to clear indexed data.")
             return
         

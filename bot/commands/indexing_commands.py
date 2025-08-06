@@ -9,6 +9,7 @@ from discord.ext import commands
 import logging
 from typing import Optional
 from utils.error_handler import log_error_with_context
+from utils.permissions import has_permission
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +40,8 @@ class IndexingCommands(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     async def index_server(self, interaction: discord.Interaction):
         """Index all text channels in the server."""
-        # Check if user has administrator permissions
-        if not interaction.user.guild_permissions.administrator:
+        # Check if user has administrator permissions or is superuser
+        if not has_permission(interaction.user.id, interaction.user.guild_permissions, "administrator"):
             await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
             return
         
@@ -50,7 +51,7 @@ class IndexingCommands(commands.Cog):
             await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
-        if self.bot.is_indexing:
+        if self.bot.is_indexing_in_progress():
             await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
@@ -74,8 +75,8 @@ class IndexingCommands(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     async def index_channel(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None):
         """Index a specific channel. If no channel is specified, indexes the current channel."""
-        # Check if user has administrator permissions
-        if not interaction.user.guild_permissions.administrator:
+        # Check if user has administrator permissions or is superuser
+        if not has_permission(interaction.user.id, interaction.user.guild_permissions, "administrator"):
             await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
             return
         
@@ -85,7 +86,7 @@ class IndexingCommands(commands.Cog):
             await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
-        if self.bot.is_indexing:
+        if self.bot.is_indexing_in_progress():
             await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
@@ -115,8 +116,8 @@ class IndexingCommands(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     async def reindex_server(self, interaction: discord.Interaction):
         """Clear existing index and reindex all text channels in the server."""
-        # Check if user has administrator permissions
-        if not interaction.user.guild_permissions.administrator:
+        # Check if user has administrator permissions or is superuser
+        if not has_permission(interaction.user.id, interaction.user.guild_permissions, "administrator"):
             await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
             return
         
@@ -126,7 +127,7 @@ class IndexingCommands(commands.Cog):
             await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
-        if self.bot.is_indexing:
+        if self.bot.is_indexing_in_progress():
             await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         
@@ -173,8 +174,8 @@ class IndexingCommands(commands.Cog):
     @app_commands.default_permissions(administrator=True)
     async def reindex_channel(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None):
         """Clear existing index and reindex a specific channel. If no channel is specified, reindexes the current channel."""
-        # Check if user has administrator permissions
-        if not interaction.user.guild_permissions.administrator:
+        # Check if user has administrator permissions or is superuser
+        if not has_permission(interaction.user.id, interaction.user.guild_permissions, "administrator"):
             await interaction.response.send_message("❌ **Permission Denied**: You need Administrator permissions to use indexing commands.")
             return
         
@@ -184,7 +185,7 @@ class IndexingCommands(commands.Cog):
             await interaction.response.send_message("❌ No servers available for indexing.")
             return
         
-        if self.bot.is_indexing:
+        if self.bot.is_indexing_in_progress():
             await interaction.response.send_message("❌ Indexing is already in progress. Please wait for it to complete.")
             return
         

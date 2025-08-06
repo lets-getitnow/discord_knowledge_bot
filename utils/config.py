@@ -111,10 +111,24 @@ def load_config():
         logger.error("OPENAI_API_KEY environment variable is not set")
         raise ValueError("OPENAI_API_KEY environment variable is required")
     
+    # Load superuser Discord ID (optional)
+    superuser_id = os.getenv('SUPERUSER_DISCORD_ID')
+    logger.info(f"Superuser Discord ID loaded from environment: {'Present' if superuser_id else 'Not configured'}")
+    
+    if superuser_id:
+        # Validate superuser ID format
+        try:
+            int(superuser_id)
+            logger.info(f"Superuser ID validation passed: {superuser_id}")
+        except ValueError:
+            logger.error(f"Invalid superuser ID format: {superuser_id}")
+            raise ValueError("SUPERUSER_DISCORD_ID must be a valid numeric Discord user ID")
+    
     # Override config with environment variables
     config['bot']['token'] = discord_token
     config['bot']['app_id'] = discord_app_id
     config['openai']['api_key'] = openai_key
+    config['bot']['superuser_id'] = superuser_id
     
     logger.info("Configuration loaded successfully")
     return config

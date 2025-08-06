@@ -77,7 +77,7 @@ All commands are now slash commands (`/`) that appear in Discord's command inter
 - `/status` - Show bot and indexing status
 - `/stats` - Show detailed statistics
 - `/clear` - Clear all indexed data (Admin only)
-- `/invite` - Generate an invite URL for the bot
+
 
 #### Chat Commands
 - `/ask <question>` - Ask a question about **this channel's** content
@@ -196,7 +196,7 @@ indexing:
 ```
 /status
 /stats
-/invite
+
 ```
 
 ## Security

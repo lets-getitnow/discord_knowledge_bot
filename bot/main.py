@@ -1,6 +1,11 @@
 """
 Main Discord bot for Discord Knowledge Bot.
 Handles bot initialization and core functionality.
+
+Requirements:
+- Ensure only one indexing operation can run at a time using async locks
+- Provide proper error handling and cleanup for indexing operations
+- Support both server and channel-level indexing with progress tracking
 """
 
 import discord
@@ -48,9 +53,22 @@ class DiscordKnowledgeBot(commands.Bot):
         self.ai_interface = AIInterface()
         self.context_builder = ContextBuilder(self.storage)
         
-        # Indexing status
+        # Indexing status with proper async lock
+        self.indexing_lock = asyncio.Lock()
         self.is_indexing = False
         self.indexing_progress = {}
+    
+    def is_indexing_in_progress(self) -> bool:
+        """Check if indexing is currently in progress."""
+        return self.indexing_lock.locked() or self.is_indexing
+    
+    def get_indexing_status(self) -> dict:
+        """Get current indexing status for debugging/monitoring."""
+        return {
+            'is_indexing': self.is_indexing,
+            'lock_acquired': self.indexing_lock.locked(),
+            'progress': self.indexing_progress.copy()
+        }
     
     async def setup_hook(self):
         """Set up bot components."""
@@ -122,37 +140,43 @@ class DiscordKnowledgeBot(commands.Bot):
             raise
     
     async def start_indexing(self, guild_id: int, channel_id: Optional[int] = None):
-        """Start indexing process."""
-        if self.is_indexing:
+        """Start indexing process with proper locking."""
+        # Try to acquire the lock without blocking
+        if self.indexing_lock.locked():
             return False, "Indexing already in progress"
         
-        self.is_indexing = True
-        self.indexing_progress = {'status': 'Starting...', 'processed': 0, 'total': 0}
-        
-        try:
-            guild = self.get_guild(guild_id)
-            if not guild:
-                return False, "Guild not found"
+        async with self.indexing_lock:
+            # Double-check in case another operation started between the check and lock acquisition
+            if self.is_indexing:
+                return False, "Indexing already in progress"
             
-            if channel_id:
-                # Index specific channel
-                channel = guild.get_channel(channel_id)
-                if not channel:
-                    return False, "Channel not found"
+            self.is_indexing = True
+            self.indexing_progress = {'status': 'Starting...', 'processed': 0, 'total': 0}
+            
+            try:
+                guild = self.get_guild(guild_id)
+                if not guild:
+                    return False, "Guild not found"
                 
-                await self._index_channel(channel)
-            else:
-                # Index entire server
-                await self._index_server(guild)
-            
-            return True, "Indexing completed successfully"
-            
-        except Exception as e:
-            log_error_with_context(e, "indexing process")
-            return False, f"Indexing failed: {str(e)}"
-        finally:
-            self.is_indexing = False
-            self.indexing_progress = {}
+                if channel_id:
+                    # Index specific channel
+                    channel = guild.get_channel(channel_id)
+                    if not channel:
+                        return False, "Channel not found"
+                    
+                    await self._index_channel(channel)
+                else:
+                    # Index entire server
+                    await self._index_server(guild)
+                
+                return True, "Indexing completed successfully"
+                
+            except Exception as e:
+                log_error_with_context(e, "indexing process")
+                return False, f"Indexing failed: {str(e)}"
+            finally:
+                self.is_indexing = False
+                self.indexing_progress = {}
     
     async def _index_server(self, guild):
         """Index all text channels in a server."""
