@@ -9,6 +9,10 @@ import logging
 from bot.main import run_bot
 import discord
 
+# Set environment variable to disable HuggingFace tokenizers parallelism warnings
+# This prevents warnings about forking after tokenizers initialization
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
