@@ -30,6 +30,7 @@ A Discord bot that indexes server content and provides AI-powered chat functiona
 The bot requires the following environment variables to be set in a `.env` file:
 
 - `DISCORD_TOKEN`: Your Discord bot token from the Discord Developer Portal
+- `DISCORD_APP_ID`: Your Discord application ID from the Discord Developer Portal
 - `OPENAI_API_KEY`: Your OpenAI API key from the OpenAI platform
 
 These are loaded automatically when the bot starts.
@@ -55,8 +56,9 @@ These are loaded automatically when the bot starts.
    
    Then edit `.env` and add your actual values:
    ```
-   DISCORD_TOKEN=your_discord_bot_token
-   OPENAI_API_KEY=your_openai_api_key
+   DISCORD_TOKEN=your_discord_bot_token_here
+   DISCORD_APP_ID=your_discord_application_id_here
+   OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 4. **Configure the bot**:
