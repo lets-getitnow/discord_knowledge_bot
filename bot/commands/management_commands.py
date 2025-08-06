@@ -19,6 +19,50 @@ class ManagementCommands(commands.Cog):
         """Initialize the management commands."""
         self.bot = bot
     
+    @app_commands.command(name="help", description="Show help information and available commands.")
+    async def help(self, interaction: discord.Interaction):
+        """Show help information and available commands."""
+        try:
+            help_msg = "🤖 **Discord Knowledge Bot Help**\n\n"
+            
+            help_msg += "**📚 Indexing Commands (Admin Only)**\n"
+            help_msg += "• `/index-server` - Index all text channels in the server\n"
+            help_msg += "• `/index-channel [channel]` - Index a specific channel (or current channel)\n"
+            help_msg += "• `/reindex-server` - Clear and reindex all text channels\n"
+            help_msg += "• `/reindex-channel [channel]` - Clear and reindex a specific channel\n\n"
+            
+            help_msg += "**💬 Chat Commands**\n"
+            help_msg += "• `/ask <question>` - Ask a question about **this channel's** content\n"
+            help_msg += "• `/ask-server <question>` - Ask a question about the **entire server's** content\n"
+            help_msg += "• **Natural Chat**: Simply send a message to chat with the AI!\n\n"
+            
+            help_msg += "**⚙️ Management Commands**\n"
+            help_msg += "• `/status` - Show bot and indexing status\n"
+            help_msg += "• `/stats` - Show detailed statistics\n"
+            help_msg += "• `/clear` - Clear all indexed data (Admin only)\n"
+            help_msg += "• `/ping` - Test command to verify bot is working\n\n"
+            
+            help_msg += "**🔍 Search Types**\n"
+            help_msg += "• **Channel-Specific** (`/ask`): Searches only within the current channel\n"
+            help_msg += "• **Server-Wide** (`/ask-server`): Searches across all indexed channels\n\n"
+            
+            help_msg += "**📋 Permissions**\n"
+            help_msg += "• Indexing commands require Administrator permissions\n"
+            help_msg += "• Chat commands work for everyone\n"
+            help_msg += "• Bot needs 'Read Message History' permission to index channels\n\n"
+            
+            help_msg += "**💡 Tips**\n"
+            help_msg += "• Index your server first with `/index-server`\n"
+            help_msg += "• Use `/ask` for channel-specific questions\n"
+            help_msg += "• Use `/ask-server` for server-wide questions\n"
+            help_msg += "• Send regular messages to chat naturally with the AI"
+            
+            await interaction.response.send_message(help_msg)
+            
+        except Exception as e:
+            log_error_with_context(e, "help command")
+            await interaction.response.send_message(f"❌ An error occurred while getting help: {str(e)}")
+    
     @app_commands.command(name="ping", description="Test command to verify bot is working.")
     async def ping(self, interaction: discord.Interaction):
         """Test command to verify bot is working."""

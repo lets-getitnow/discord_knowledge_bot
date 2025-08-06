@@ -81,6 +81,7 @@ All commands are now slash commands (`/`) that appear in Discord's command inter
 - `/reindex-channel [channel]` - Clear and reindex a specific channel
 
 #### Management Commands
+- `/help` - Show help information and available commands
 - `/status` - Show bot and indexing status
 - `/stats` - Show detailed statistics
 - `/clear` - Clear all indexed data (Admin only)
