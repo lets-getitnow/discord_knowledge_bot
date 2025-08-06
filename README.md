@@ -4,8 +4,8 @@ A Discord bot that indexes server content and provides AI-powered chat functiona
 
 ## Key Features
 
-- **Local Vector Database**: Uses ChromaDB for local vector storage - no external database required
-- **Local Embeddings**: Uses sentence-transformers for local embedding generation - no external embedding API needed
+- **Local Vector Database**: Uses [ChromaDB](https://github.com/chroma-core/chroma) for local vector storage - no external database required
+- **Local Embeddings**: Uses [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) for local embedding generation - no external embedding API needed
 - **OpenAI Integration**: Only external dependency is OpenAI API for final chat completion
 - **Self-Contained**: Runs entirely locally except for OpenAI chat completion
 
@@ -177,8 +177,8 @@ indexing:
 
 ## Technical Details
 
-- **Local Vector Database**: ChromaDB provides local vector storage - no external database required
-- **Local Embeddings**: Uses sentence-transformers/all-MiniLM-L6-v2 for local embedding generation - no external embedding API needed
+- **Local Vector Database**: [ChromaDB](https://github.com/chroma-core/chroma) provides local vector storage - no external database required
+- **Local Embeddings**: Uses [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) for local embedding generation - no external embedding API needed
 - **OpenAI Integration**: Only external dependency is OpenAI API for final chat completion
 - **Text Processing**: MVP functionality with basic cleaning and chunking
 - **Vector Search**: ChromaDB with LlamaIndex for semantic search
