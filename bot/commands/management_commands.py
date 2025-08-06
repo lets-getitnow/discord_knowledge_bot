@@ -34,7 +34,7 @@ class ManagementCommands(commands.Cog):
             help_msg += "**💬 Chat Commands**\n"
             help_msg += "• `/ask <question>` - Ask a question about **this channel's** content\n"
             help_msg += "• `/ask-server <question>` - Ask a question about the **entire server's** content\n"
-            help_msg += "• **Natural Chat**: Simply send a message to chat with the AI!\n\n"
+            help_msg += "• **Direct Mentions**: Mention me with `@bot_name` to chat directly!\n\n"
             
             help_msg += "**⚙️ Management Commands**\n"
             help_msg += "• `/status` - Show bot and indexing status\n"

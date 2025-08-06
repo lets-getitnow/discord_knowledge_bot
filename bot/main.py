@@ -109,26 +109,32 @@ class DiscordKnowledgeBot(commands.Bot):
         if message.author == self.user:
             return
         
-        # Debug: Log all messages that start with prefix
-        if message.content.startswith(config['bot']['prefix']):
-            logger.info(f"Command received: {message.content}")
-        
-        # Handle commands
+        # Handle slash commands (processed automatically by Discord.py)
         await self.process_commands(message)
         
-        # Handle chat (non-command messages)
-        if not message.content.startswith(config['bot']['prefix']):
+        # Handle direct mentions (@bot_name)
+        if self.user in message.mentions:
             await self.handle_chat(message)
     
     async def handle_chat(self, message):
         """Handle natural language chat with the bot."""
         try:
+            # Remove bot mention from message content
+            content = message.content
+            for mention in message.mentions:
+                content = content.replace(f'<@{mention.id}>', '').replace(f'<@!{mention.id}>', '')
+            content = content.strip()
+            
+            if not content:
+                await message.channel.send("Hello! You can use `/ask` to ask me questions about this channel's content, or `/ask-server` to ask about the entire server.")
+                return
+            
             # Build context
-            context = self.context_builder.build_conversation_context(message.content)
+            context = self.context_builder.build_conversation_context(content)
             
             # Get AI response
             response = await self.ai_interface.get_response(
-                message.content, 
+                content, 
                 context['relevant_docs']
             )
             

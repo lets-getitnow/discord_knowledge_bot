@@ -93,8 +93,8 @@ All commands are now slash commands (`/`) that appear in Discord's command inter
 - `/ask <question>` - Ask a question about **this channel's** content
 - `/ask-server <question>` - Ask a question about the **entire server's** content
 
-#### Natural Chat
-Simply send a message to chat with the AI! The bot will search through indexed content to provide relevant answers.
+#### Direct Mentions
+Mention the bot with `@bot_name` to chat directly! The bot will search through indexed content to provide relevant answers.
 
 ### Context-Aware Search
 
