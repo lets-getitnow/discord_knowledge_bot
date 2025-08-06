@@ -26,6 +26,7 @@ class ChromaStorage:
         self.vector_store = None
         self.embed_model = None
         self.index = None
+        self._embed_model_initialized = False
         self._initialize_client()
     
     def _initialize_client(self):
@@ -35,11 +36,6 @@ class ChromaStorage:
             self.client = chromadb.PersistentClient(
                 path=self.persist_directory,
                 settings=Settings(anonymized_telemetry=False)
-            )
-            
-            # Initialize local embedding model
-            self.embed_model = HuggingFaceEmbedding(
-                model_name=config['embeddings']['model_name']
             )
             
             # Get or create collection
@@ -54,21 +50,21 @@ class ChromaStorage:
             # Create storage context
             storage_context = StorageContext.from_defaults(vector_store=self.vector_store)
             
-            # Try to load existing index, otherwise create empty one
-            try:
-                self.index = VectorStoreIndex.from_vector_store(
-                    vector_store=self.vector_store,
-                    embed_model=self.embed_model
-                )
-            except:
-                # Create empty index if none exists
-                self.index = VectorStoreIndex(
-                    nodes=[],
-                    storage_context=storage_context,
-                    embed_model=self.embed_model
-                )
+            # Initialize the embedding model immediately to ensure it's used
+            logger.info(f"Initializing embedding model: {config['embeddings']['model_name']}")
+            self.embed_model = HuggingFaceEmbedding(
+                model_name=config['embeddings']['model_name']
+            )
+            self._embed_model_initialized = True
             
-            logger.info(f"ChromaDB initialized with local embeddings ({config['embeddings']['model_name']}) and collection: {self.collection_name}")
+            # Initialize index with the embedding model
+            self.index = VectorStoreIndex(
+                nodes=[],
+                storage_context=storage_context,
+                embed_model=self.embed_model
+            )
+            
+            logger.info(f"ChromaDB initialized with collection: {self.collection_name}")
             
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB: {e}")
@@ -77,6 +73,7 @@ class ChromaStorage:
     def add_documents(self, documents: List[str], metadatas: List[Dict[str, Any]], ids: List[str]):
         """Add documents to the collection using LlamaIndex."""
         try:
+            
             # Create LlamaIndex Document objects
             llama_docs = []
             for i, doc_text in enumerate(documents):
@@ -99,6 +96,7 @@ class ChromaStorage:
     def search(self, query: str, n_results: int = 5, filter_metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Search for similar documents using local embeddings with optional metadata filtering."""
         try:
+            
             # Use LlamaIndex retriever for semantic search
             retriever = self.index.as_retriever(similarity_top_k=n_results)
             nodes = retriever.retrieve(query)
@@ -183,7 +181,7 @@ class ChromaStorage:
             self.vector_store = ChromaVectorStore(chroma_collection=self.collection)
             storage_context = StorageContext.from_defaults(vector_store=self.vector_store)
             
-            # Create new empty index
+            # Create new empty index with the embedding model
             self.index = VectorStoreIndex(
                 nodes=[],
                 storage_context=storage_context,

@@ -57,15 +57,6 @@ These are loaded automatically when the bot starts.
 
 ## Usage
 
-### Testing Your Setup
-
-Before running the bot, test your configuration:
-```bash
-python test_setup.py
-```
-
-This will validate your Discord token, environment variables, and dependencies.
-
 ### Starting the Bot
 
 ```bash
