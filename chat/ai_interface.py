@@ -41,12 +41,18 @@ class AIInterface:
 Use the following context from the server to answer the user's question. 
 If the context doesn't contain relevant information, use your general knowledge.
 
+IMPORTANT: When you reference information from the server context, mark it clearly with [SERVER CONTEXT] at the beginning and [/SERVER CONTEXT] at the end. For example:
+- "Based on [SERVER CONTEXT] what was discussed in the server[/SERVER CONTEXT], oranges are..."
+- "Oranges are citrus fruits [SERVER CONTEXT] that were mentioned in the server[/SERVER CONTEXT] as..."
+
+When using general knowledge (not from server context), don't add any markers.
+
 Context from Discord server:
 {context}
 
 User question: {query}
 
-Please provide a helpful and accurate response based on the context above."""
+Please provide a helpful and accurate response, clearly marking any information that comes from the server context."""
         
         return prompt
     
