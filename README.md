@@ -23,7 +23,7 @@ A Discord bot that indexes server content and provides AI-powered chat functiona
 
 - Python 3.8 or higher
 - Discord Bot Token
-- OpenAI API Key
+- OpenAI API Key (required today for response generation)
 
 ## Environment Variables
 
@@ -178,16 +178,43 @@ indexing:
 2. **Chat**: User Query → Context-Aware Search → AI Response
 3. **Search**: Query → ChromaDB Search (with optional filtering) → Formatted Results
 
+## Data Flow & Privacy
+
+- **Stays local**: Discord message data, embeddings (vector representations), and the vector database (Chroma) all reside on your machine.
+- **Sent to OpenAI (required today)**: For each response, the bot sends the user's prompt plus a small, selected set of retrieved context snippets to OpenAI for final response generation.
+- **Planned**: Support for selecting alternative model providers via LlamaIndex so responses can be generated without OpenAI.
+
 ## Technical Details
 
 - **Local Vector Database**: [ChromaDB](https://github.com/chroma-core/chroma) provides local vector storage - no external database required
 - **Local Embeddings**: Uses [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) for local embedding generation - no external embedding API needed
-- **OpenAI Integration**: Only external dependency is OpenAI API for final chat completion
+- **OpenAI Integration**: Only external dependency is OpenAI API for final chat completion (required today)
 - **Text Processing**: MVP functionality with basic cleaning and chunking
 - **Vector Search**: ChromaDB with LlamaIndex for semantic search
 - **Context Filtering**: Channel-specific search with metadata filtering
 - **Slash Commands**: Modern Discord slash command interface
 - **Permission System**: Admin-only commands for destructive operations
+
+## Model Providers (Planned)
+
+We plan to support selecting among multiple LLM providers supported by LlamaIndex for response generation. See the official LlamaIndex documentation for provider options:
+
+- [LlamaIndex LLMs (model providers)](https://docs.llamaindex.ai/en/stable/module_guides/models/llms/)
+
+Once implemented, you will be able to choose a provider in configuration; until then, OpenAI is required.
+
+## FAQ
+
+- **Do you send our data to OpenAI?**
+  - Yes, today the bot sends the user prompt and selected retrieved context to OpenAI to generate the final response. Raw server data and the full vector database remain local.
+- **Does OpenAI train on our API data?**
+  - No. Per OpenAI's API data usage policy, data submitted via the API is not used to train OpenAI models unless you explicitly opt in. See: [OpenAI API Data Usage Policy](https://openai.com/policies/api-data-usage)
+- **What is “final chat completion”?**
+  - The last step where an LLM takes your prompt plus retrieved context and generates the natural-language reply.
+- **Can I avoid OpenAI?**
+  - Not yet. OpenAI is required today. Planned support will allow selecting other providers via LlamaIndex; see the link above.
+- **How long does indexing take?**
+  - Depends on server size and rate limits. For a mid-size server (thousands of users, dozens of channels, multiple years), initial indexing can take hours.
 
 ## Command Examples
 
