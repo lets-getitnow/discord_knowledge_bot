@@ -1,5 +1,7 @@
 # Discord Knowledge Bot
 
+**🚀 Try it live now: [Join the demo server](https://discord.gg/2pEynAvjhv)**
+
 A Discord bot that indexes server content and provides AI-powered chat functionality using **local vectorDB**, **local embeddings**, and **OpenAI** for final chat completion (other model support coming soon).
 
 ## Key Features
