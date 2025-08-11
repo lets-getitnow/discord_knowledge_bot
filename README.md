@@ -1,6 +1,6 @@
 # Discord Knowledge Bot
 
-A Discord bot that indexes server content and provides AI-powered chat functionality using **local vectorDB**, **local embeddings**, and **OpenAI** for final chat completion.
+A Discord bot that indexes server content and provides AI-powered chat functionality using **local vectorDB**, **local embeddings**, and **OpenAI** for final chat completion (other model support coming soon).
 
 ## Key Features
 
