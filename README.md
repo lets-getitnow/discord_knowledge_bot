@@ -1,14 +1,6 @@
 # Discord Knowledge Bot
 **Demo Video**: [https://www.youtube.com/watch?v=2LhrUmU_F2E](https://www.youtube.com/watch?v=2LhrUmU_F2E)
 
-<iframe 
-  width="560" 
-  height="315" 
-  src="https://www.youtube.com/embed/2LhrUmU_F2E" 
-  frameborder="0" 
-  allowfullscreen>
-</iframe>
-
 A Discord bot that indexes server content and provides AI-powered chat functionality using **local vectorDB**, **local embeddings**, and **OpenAI** for final chat completion (other model support coming soon).
 
 ## Key Features
